@@ -73,7 +73,7 @@ int scan_cfg_file_open( const FILE *sys_cfg_fp,  const FILE *usr_cfg_fp)
 	return RET_OK;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
-int scan_modem_oper_mode()
+int scan_cfg_modem_oper_mode_get()
 {
 	int ret;
 	char buf[BUFSIZE];
@@ -96,7 +96,7 @@ int scan_modem_oper_mode()
 	return mode;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
-int scan_modem_auto_operate_flag()
+int scan_cfg_modem_auto_operate_flag_get()
 {
 	int ret;
 	char buf[BUFSIZE];
@@ -116,7 +116,7 @@ int scan_modem_auto_operate_flag()
 	return flag;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
-int scan_modem_uart_port_get(int index, char *port)
+int scan_cfg_modem_uart_port_get(int index, char *port)
 {
 	int ret;
 	char buf[BUFSIZE];

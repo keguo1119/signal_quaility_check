@@ -26,7 +26,7 @@ TModemLocal pModem[MODEM_NUM];
 TModemAtCmdStr AtCmdStr[MAX_AT_CMD_NUMS] =  {
     {"AT\r",            "OK", ""}, //AT          = 0,
     {"ATE%d\r",         "OK", ""}, //ATE1 开回显,ATE0 关,
-    {"AT+CGMI"          "OK", ""},  //查询厂商;
+    {"AT+CGMI\r"          "OK", ""},  //查询厂商;
     {"AT+CMEE",         "OK", ""}, //AT_CMEE_SET     , =2 ,当发生错误的时候，显示详细信息
     {"AT+CGREG",        "OK", ""}, ///AT_CGREG_SET   , =2 ,打开PS域注册状态变化时的主动上报功
    
@@ -53,8 +53,9 @@ static int scan_modem_manu_que(TModemLocal *pm)
 {
     int ret;
     char rev_buf[128];
+    char info_buf[128];
 
-    ret = modem_atCmd_w_r(&pm->atModem, AtCmdStr[AT_CURC_SET_H].atCmd, AtCmdStr[AT_CGMI_QUE].atCmdOkResp, rev_buf);
+    ret = modem_atCmd_w_r(&pm->atModem, AtCmdStr[AT_CGMI_QUE].atCmd, AtCmdStr[AT_CGMI_QUE].atCmdOkResp, rev_buf);
     if(ret != RET_OK)
 	{
 		return RET_FAILED;
@@ -62,9 +63,13 @@ static int scan_modem_manu_que(TModemLocal *pm)
 
     if(strstr(rev_buf, "Huawei")) {
         pm->manu_id = HUAWEI;
+        sprintf(info_buf, "Modem %d MANU is HUAWEI, manu_id=%d\n", pm->index,  pm->manu_id);
     } else if (strstr(rev_buf, "Yuga")) {
         pm->manu_id = YUGA;
+        sprintf(info_buf, "Modem %d MANU is YUGA, manu_id=%d\n", pm->index,  pm->manu_id);
     }
+
+    scan_file_error_info_save(info_buf);
 
 	return RET_OK;
 
@@ -138,7 +143,10 @@ static int scan_modem_cmer_set(TModem *ptModem, int mode)
     int ret;
     char cmd_buf[128];
 
-    snprintf(cmd_buf, 128, "%s=%d\r", AtCmdStr[AT_CMER_SET_Y].atCmd, mode);
+    if(!mode)
+        snprintf(cmd_buf, 128, "%s=%s\r", AtCmdStr[AT_CMER_SET_Y].atCmd, "0,0,0,0"); //关
+    else 
+        snprintf(cmd_buf, 128, "%s=%s\r", AtCmdStr[AT_CMER_SET_Y].atCmd, "1,0,0,1"); //开
 
     ret = modem_atCmd_w_r(ptModem, cmd_buf, AtCmdStr[AT_CMER_SET_Y].atCmdOkResp, NULL);
     if(ret != RET_OK)
@@ -198,6 +206,7 @@ static int scan_modem_sim_status_check(TModem *ptModem)
 
 	return RET_OK;
 }
+////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
 // AT+CGREG?  =?,1(5) 表示注册上网络
 static int scan_modem_net_register_check(TModem *ptModem)
@@ -259,13 +268,17 @@ static int scan_modem_sim_oper_que(TModemLocal *pm)
     return RET_OK;
 }
 /////////////////////////////////////////////////////////////////////////////
-// 3G/4G mode 查询
-static int scan_modem_sim_mode_que(TModemLocal *pm)
+// 3G/4G mode 查询， HUAWEI
+static estand_mode scan_modem_sim_mode_que_H(TModemLocal *pm)
 {
     char *pData,*pEnd;
     int ret;
     char  tmp_buf[MAX_INFO_LEN];
     TModem *ptModem = &pm->atModem;
+
+    if(HUAWEI != pm->manu_id) {
+        return NO_MODE;
+    } 
 
     ret = modem_atCmd_w_r(ptModem, AtCmdStr[AT_HCSQ_QUE_H].atCmd, AtCmdStr[AT_HCSQ_QUE_H].atCmdOkResp,tmp_buf);
     if(ret != RET_OK) {
@@ -287,16 +300,75 @@ static int scan_modem_sim_mode_que(TModemLocal *pm)
         pm->mode = GSM;
     }
     printf("%s modem %d : buf=%s, mode=%d\n", __func__, pm->index, tmp_buf, pm->mode);
-    return RET_OK;
+    return pm->mode;
 }
-/////////////////////////////////////////////////////////
-static int scan_modem_signal_quality_info_get(TModem *ptModem, char *buf, eoper_mode mode)
+/////////////////////////////////////////////////////////////////////////////
+// 3G/4G mode 查询， YUGA
+static estand_mode scan_modem_sim_mode_que_Y(TModemLocal *pm)
+{
+    int  i, ret;
+    char *pData,*pEnd;
+    char err_buf[128];
+    char cmd_buf[128];
+    char rev_buf[128];
+    int mode = 0;
+
+    if(YUGA != pm->manu_id) {
+        return NO_MODE;
+    } 
+
+    snprintf(cmd_buf, 128, "%s?\r", AtCmdStr[AT_MODECONFIG_SET_Y].atCmd);
+    ret = modem_atCmd_w_r(&pm->atModem, cmd_buf, "OK", rev_buf);
+    if(ret != RET_OK) {
+        snprintf(err_buf, 128, "Modem %d operater query failed!, cmd_buf=%s\n", pm->index, cmd_buf);
+        scan_file_error_info_save(err_buf);
+    }   
+
+    pData = strchr(rev_buf, ':');
+    if(!pData) {
+         scan_file_error_info_save("scan_modem_sim_mode_que_Y error!");
+        return RET_FAILED;
+    } else {
+        pData++;
+        pEnd = strchr(pData, '\r');
+        if(pEnd == NULL)
+        {
+            pEnd   = strchr(pData, '\n');
+        } 
+    }  
+    *(pEnd + 1) = '\0';
+
+    sscanf(pData, "%d", &mode);
+
+    switch (mode) {
+        case 9:
+            pm->mode = CDMA;
+            break;
+        case 14:
+             pm->mode = WCDMA;
+            break;
+        case 15:
+             pm->mode = TD_SCDMA;
+            break;
+        case 38:
+            pm->mode = LTE;
+            break;
+        default:
+            pm->mode = NO_MODE;
+            break;    
+    }
+    printf("%s: modem %d mode = %d, pData=%s, rev_buf=%s\n", __func__, pm->index, pm->mode, pData, rev_buf);
+    return pm->mode;
+       
+}
+/////////////////////////////////////////////////////////////////////////////////////////
+/////////HUAWEI 信号质量获取
+static int scan_modem_signal_quality_info_get_H(TModem *ptModem, char *buf, eoper_mode mode)
 {
     char *pData,*pEnd;
     int ret, i, j;
     char  tmp_buf[MAX_INFO_LEN];
     int rssi, rscp, rsrp, ecio, sinr, rsrq;
-    char start_buf[MAX_INFO_LEN/2], end_buf[MAX_INFO_LEN/2];
 
     ret = modem_atCmd_w_r(ptModem, AtCmdStr[AT_HCSQ_QUE_H].atCmd, AtCmdStr[AT_HCSQ_QUE_H].atCmdOkResp,tmp_buf);
     if(ret != RET_OK)
@@ -337,9 +409,45 @@ static int scan_modem_signal_quality_info_get(TModem *ptModem, char *buf, eoper_
    printf("pData=%s, buf=%s\n",pData, buf);
 
 }
+//////////////////////////////////////////////////////////////////////////////////////
+////YUGA 信号质量获取
+static int scan_modem_signal_quality_info_get_Y(TModem *ptModem, char *buf, eoper_mode mode)
+{
+    char *pData,*pEnd;
+    int ret, i, j;
+    char  tmp_buf[MAX_INFO_LEN];
+    int rssi, ber;
+
+    ret = modem_atCmd_w_r(ptModem, AtCmdStr[AT_CCSQ_QUE_Y].atCmd, AtCmdStr[AT_CCSQ_QUE_Y].atCmdOkResp,tmp_buf);
+    if(ret != RET_OK)
+	{
+        scan_file_error_info_save("scan_modem_signal_quality_info_get_Y no info get\n");
+		return RET_FAILED;
+	}
+    pData = strchr(tmp_buf, ':');
+    if(!pData) {
+        scan_file_error_info_save("scan_modem_signal_quality_info_get_Y no info get 1\n");
+        return RET_FAILED;
+    } else {
+        pData++;
+         pEnd = strchr(pData, '\r');
+        if(pEnd == NULL)
+        {
+            pEnd   = strchr(pData, '\n');
+        } 
+    }
+   
+    *(pEnd + 1) = '\0';
+
+    sscanf(pData, "%d %d", &rssi, &ber);
+    printf("pData=%s, rssi=%d, ber=%d\n", pData, rssi, ber);
+
+    sprintf(buf, "%d,", rssi);    
+}
 /////////////////////////////////////////////////////////////////////////////
-//将模块由3G 改为4G或者4G 改为3G, mode=0 设置为4G,1为3G
-int scan_modem_mode_change(int mode)
+/////////////////////////////////////////////////////////////////////////////
+//将模块由3G 改为4G或者4G 改为3G, mode=0 设置为4G,1为3G HUAWEI
+static int scan_modem_mode_change_H(int mode)
 {
     char cmd[128];
     int  i, ret;
@@ -354,9 +462,15 @@ int scan_modem_mode_change(int mode)
         if(0 == pm->isvaild) {
             continue;
         }
+
+        if(HUAWEI != pm->manu_id) {
+            continue;
+        } 
+
+        memset(cmd_buf, 0, 128);
+        memset(err_buf, 0 ,128);
+
         if(0 == mode ) {
-            memset(cmd_buf, 0, 128);
-            memset(err_buf, 0 ,128);
             snprintf(cmd_buf, 128, "AT^SYSCFGEX=\"%s\",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,\r", "03");
             ret = modem_atCmd_w_r(&pm->atModem, cmd_buf, "OK", NULL);
             if(ret != RET_OK) {
@@ -364,12 +478,10 @@ int scan_modem_mode_change(int mode)
                 scan_file_error_info_save(err_buf);
             }
         } else if (1 == mode) {
-            memset(cmd_buf, 0, 128);
-            memset(err_buf, 0 ,128);
             snprintf(cmd_buf, 128, "AT^SYSCFGEX=\"%s\",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,\r", "02");
             ret = modem_atCmd_w_r(&pm->atModem, cmd_buf, "OK", NULL);
             if(ret != RET_OK) {
-                snprintf(err_buf, 128, "Modem %d set LTE mdoe faield!, cmd_buf=%s\n", pm->index, cmd_buf);
+                snprintf(err_buf, 128, "Modem %d set 3G mdoe faield!, cmd_buf=%s\n", pm->index, cmd_buf);
                 scan_file_error_info_save(err_buf);
             }
         }
@@ -378,6 +490,87 @@ int scan_modem_mode_change(int mode)
     oss_delay(15 * 1000);
 
     return RET_OK;
+}
+/////////////////////////////////////////////////////////////////////////////
+//将模块由3G 改为4G或者4G 改为3G, mode=0 设置为4G,1为3G YUGA
+static int scan_modem_mode_change_Y(int mode)
+{
+    char cmd[128];
+    int  i, ret;
+    char err_buf[128];
+    char cmd_buf[128];
+    
+    int  md;
+    char mode_info[128];
+
+    TModemLocal *pm = pModem;
+
+    for (i = 0; i < MODEM_NUM; i++ ) {
+        pm = &pModem[i];
+
+        if(0 == pm->isvaild) {
+            continue;
+        }
+
+        if(YUGA != pm->manu_id) {
+            continue;
+        } 
+        
+        memset(cmd_buf, 0, 128);
+        memset(err_buf, 0 ,128);
+
+        if(0 == mode) {
+            md = 38; //LTE only
+            strcpy(mode_info, "LTE only");
+        } else if( 1 == mode) {
+            switch (pm->oper) {
+            case CMCC: 
+                md = 15; //LTE only
+                strcpy(mode_info, "TD-SCDMA only");
+                break;
+            case CUCC: 
+                md = 14; //LTE only
+                strcpy(mode_info, "WCDMA only");
+                break;
+            case CTCC: 
+                md = 9; //LTE only
+                strcpy(mode_info, "CDMA only");
+                break;
+            default :
+                continue;
+                break;
+            }
+        }
+
+        snprintf(cmd_buf, 128, "%s=%d\r", AtCmdStr[AT_MODECONFIG_SET_Y].atCmd, md);       
+        ret = modem_atCmd_w_r(&pm->atModem, cmd_buf, "OK", NULL);
+        if(ret != RET_OK) {
+            snprintf(err_buf, 128, "Modem %d set %s mdoe faield!, cmd_buf=%s\n", pm->index, mode_info);
+            scan_file_error_info_save(err_buf);
+        }     
+    }
+
+    return RET_OK;
+}
+/////////////////////////////////////////////////////////////////////////////
+int scan_modem_sim_mode_que(TModemLocal *pm)
+{
+    scan_modem_sim_mode_que_H(pm);
+    scan_modem_sim_mode_que_Y(pm);
+}
+/////////////////////////////////////////////////////////////////////////////
+int scan_modem_mode_change(int mode)
+{
+    scan_modem_mode_change_H(mode);
+    scan_modem_mode_change_Y(mode);
+    
+    oss_delay(15 * 1000);
+}
+////////////////////////////////////////////////////////////////////////////////////
+int scan_modem_signal_quality_info_get(TModem *ptModem, char *buf, eoper_mode mode)
+{
+    scan_modem_signal_quality_info_get_H(ptModem, buf, mode);
+    scan_modem_signal_quality_info_get_Y(ptModem, buf, mode);
 }
 /////////////////////////////////////////////////////////////////////////////
 void scan_modem_status_check()
@@ -393,9 +586,7 @@ void scan_modem_status_check()
             continue;
         }
     
-        scan_modem_sim_status_check(&pm->atModem); 
         scan_modem_net_register_check(&pm->atModem);
-        scan_modem_sim_oper_que(pm);
         scan_modem_sim_mode_que(pm);
         oss_delay(50);
     }
@@ -429,11 +620,14 @@ static void *scan_modem_run_pthread()
             pm = &pModem[i];
 
             if(0 == pm->isvaild) {
-                printf("modem %d is scan_modem_uart_port_get failed!\n", i);
+                printf("modem %d is scan_cfg_modem_uart_port_get failed!\n", i);
                 continue;
             }
-//            printf("0-i=%d, &pm=%p\n", i, pm);
-            scan_modem_signal_quality_info_get(&pm->atModem, info_buf + strlen(info_buf), pm->oper);            
+            if(pm->manu_id == HUAWEI) {
+                scan_modem_signal_quality_info_get_H(&pm->atModem, info_buf + strlen(info_buf), pm->oper);
+            } else if (pm->manu_id == YUGA) {
+                scan_modem_signal_quality_info_get_Y(&pm->atModem, info_buf + strlen(info_buf), pm->oper);
+            }
             printf("modem %d -> signal quality: %s,oper=%d, mode=%d\n", pm->index, info_buf, pm->oper, pm->mode);
         }
 
@@ -477,10 +671,10 @@ void scan_modem_init()
         pm->mode              = LTE;
 
         printf("i =%d, pm=%p\n", i, pm);
-        ret = scan_modem_uart_port_get(i, pm->atModem.abyUartPort);
+        ret = scan_cfg_modem_uart_port_get(i, pm->atModem.abyUartPort);
         if(ret == RET_FAILED) {
             pm->isvaild = 0;
-            printf("modem %d is scan_modem_uart_port_get!\n", i);
+            printf("modem %d is scan_cfg_modem_uart_port_get!\n", i);
             continue ;
         }
 
@@ -502,8 +696,11 @@ void scan_modem_init()
                 scan_modem_cmer_set(&pm->atModem, 0);
                 scan_modem_nvauto_set(&pm->atModem, 0);
         }
-
-     
+        
+        ret = scan_modem_sim_status_check(&pm->atModem); // 
+        if(ret) {
+            scan_modem_sim_oper_que(pm);  //sim 卡运营商查询
+        }
 //        scan_modem_status_check(pm);
 
         printf("i =%d, ret=%d, vaild=%d, fd=%d, oper=%d, mode=%d\n",  
@@ -512,7 +709,7 @@ void scan_modem_init()
 
     printf(" %s is ok!\n", __func__);
 
-    mode = scan_modem_oper_mode();
+    mode = scan_cfg_modem_oper_mode_get();
    
     scan_logic_oper_mode_set(mode);
 

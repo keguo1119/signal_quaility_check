@@ -40,11 +40,11 @@ typedef enum at_cmd_index {
     
     ATS_SET_H       , //关闭自动接听
     ATS_NVAUTO_SET_Y , //关闭自动接听
-    AT_HCSQ_QUE_H   , // 华为查询信号质量，
+    AT_HCSQ_QUE_H   , // 华为查询信号质量，运营商制式查询
     AT_CCSQ_QUE_Y   , // YUGA查询信号质量
-    AT_COPS_QUE     ,  //运行商制式查询
+    AT_COPS_QUE     ,  //运行商查询
    
-    AT_MODECONFIG_SET_Y, //运行商模式设置
+    AT_MODECONFIG_SET_Y, //运行商模式设置，运营商模式查询
     AT_NDISDUP_QUE  ,
     AT_NDISDUP_SET   
 }e_at_cmd;

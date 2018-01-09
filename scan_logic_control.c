@@ -29,8 +29,8 @@ void * scan_logic_control_run_pthread()
 
 
     while(1) {
-        ret  = scan_modem_oper_mode();
-        flag = scan_modem_auto_operate_flag();
+        ret  = scan_cfg_modem_oper_mode_get();
+        flag = scan_cfg_modem_auto_operate_flag_get();
 
         if( ret != scan_oper_mode) {
             scan_modem_run_flag_set(0);
