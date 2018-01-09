@@ -1,0 +1,3 @@
+config mode
+        option scan_oper_mode '0'
+        option scan_oper_auto '0'

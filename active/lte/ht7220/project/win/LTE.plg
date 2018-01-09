@@ -1,0 +1,63 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: LTE - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSP1E90.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /I "../../../../../util" /I "../../../../common" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR"Debug/" /Fp"Debug/LTE.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"F:\shangtao\dev-1\定位设备\code\device\util\oss_log.c"
+]
+Creating command line "cl.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSP1E90.tmp" 
+Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSP1E91.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Shlwapi.lib /nologo /subsystem:console /incremental:yes /pdb:"Debug/LTE.pdb" /debug /machine:I386 /out:"Debug/LTE.exe" /pdbtype:sept 
+".\Debug\app.obj"
+".\Debug\config.obj"
+".\Debug\dlist.obj"
+".\Debug\lte.obj"
+".\Debug\lte_cell_sel.obj"
+".\Debug\lte_cfg.obj"
+".\Debug\lte_sm.obj"
+".\Debug\modem.obj"
+".\Debug\oss.obj"
+".\Debug\oss_log.obj"
+".\Debug\oss_net.obj"
+".\Debug\oss_time.obj"
+".\Debug\oss_uart.obj"
+]
+Creating command line "link.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSP1E91.tmp"
+<h3>Output Window</h3>
+Compiling...
+oss_log.c
+Linking...
+Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSP2018.tmp" with contents
+[
+/nologo /o"Debug/LTE.bsc" 
+".\Debug\app.sbr"
+".\Debug\config.sbr"
+".\Debug\dlist.sbr"
+".\Debug\lte.sbr"
+".\Debug\lte_cell_sel.sbr"
+".\Debug\lte_cfg.sbr"
+".\Debug\lte_sm.sbr"
+".\Debug\modem.sbr"
+".\Debug\oss.sbr"
+".\Debug\oss_log.sbr"
+".\Debug\oss_net.sbr"
+".\Debug\oss_time.sbr"
+".\Debug\oss_uart.sbr"]
+Creating command line "bscmake.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSP2018.tmp"
+Creating browse info file...
+<h3>Output Window</h3>
+
+
+
+<h3>Results</h3>
+LTE.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: wg - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSPAC13.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /I "../../../../../util" /I "../../../../common" /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /FR"Debug/" /Fp"Debug/wg.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\app.c"
+"F:\shangtao\dev-1\定位设备\code\device\util\config.c"
+"F:\shangtao\dev-1\定位设备\code\device\util\dlist.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_cfg.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_encode.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_oam.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_sm.c"
+"F:\shangtao\dev-1\定位设备\code\device\util\modem.c"
+"F:\shangtao\dev-1\定位设备\code\device\util\oss.c"
+"F:\shangtao\dev-1\定位设备\code\device\util\oss_gpio.c"
+"F:\shangtao\dev-1\定位设备\code\device\util\oss_log.c"
+"F:\shangtao\dev-1\定位设备\code\device\util\oss_net.c"
+"F:\shangtao\dev-1\定位设备\code\device\util\oss_time.c"
+"F:\shangtao\dev-1\定位设备\code\device\util\oss_uart.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma_cell_sel.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma_cfg.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma_encode.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma_oam.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma_sm.c"
+"F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wg_common.c"
+]
+Creating command line "cl.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSPAC13.tmp" 
+Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSPAC23.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Shlwapi.lib /nologo /subsystem:console /incremental:yes /pdb:"Debug/wg.pdb" /debug /machine:I386 /out:"Debug/wg.exe" /pdbtype:sept 
+".\Debug\app.obj"
+".\Debug\config.obj"
+".\Debug\dlist.obj"
+".\Debug\gsm.obj"
+".\Debug\gsm_cfg.obj"
+".\Debug\gsm_encode.obj"
+".\Debug\gsm_oam.obj"
+".\Debug\gsm_sm.obj"
+".\Debug\modem.obj"
+".\Debug\oss.obj"
+".\Debug\oss_gpio.obj"
+".\Debug\oss_log.obj"
+".\Debug\oss_net.obj"
+".\Debug\oss_time.obj"
+".\Debug\oss_uart.obj"
+".\Debug\wcdma.obj"
+".\Debug\wcdma_cell_sel.obj"
+".\Debug\wcdma_cfg.obj"
+".\Debug\wcdma_encode.obj"
+".\Debug\wcdma_oam.obj"
+".\Debug\wcdma_sm.obj"
+".\Debug\wg_common.obj"
+]
+Creating command line "link.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSPAC23.tmp"
+<h3>Output Window</h3>
+Compiling...
+app.c
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\app.c(204) : warning C4090: 'function' : different 'const' qualifiers
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\app.c(204) : warning C4024: 'app_uart_init' : different types for formal and actual parameter 2
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\app.c(217) : warning C4013: 'oss_uart_close' undefined; assuming extern returning int
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\app.c(200) : warning C4101: 'ret' : unreferenced local variable
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\app.c(221) : warning C4028: formal parameter 2 different from declaration
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\app.c(222) : warning C4101: 'len' : unreferenced local variable
+config.c
+dlist.c
+gsm.c
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm.c(123) : warning C4013: 'NetConnectUdpInit' undefined; assuming extern returning int
+gsm_cfg.c
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_cfg.c(17) : warning C4101: 'band_array' : unreferenced local variable
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_cfg.c(16) : warning C4101: 'earfcn_array' : unreferenced local variable
+gsm_encode.c
+f:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_encode.c(210) : warning C4244: '=' : conversion from 'unsigned short ' to 'unsigned char ', possible loss of data
+gsm_oam.c
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_oam.c(33) : warning C4244: '=' : conversion from 'unsigned short ' to 'unsigned char ', possible loss of data
+gsm_sm.c
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_sm.c(452) : warning C4047: '==' : 'unsigned char *' differs in levels of indirection from 'const int '
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_sm.c(586) : warning C4013: 'wg_dev_net_map_uart' undefined; assuming extern returning int
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\gsm_sm.c(761) : warning C4244: '=' : conversion from 'unsigned short ' to 'unsigned char ', possible loss of data
+modem.c
+oss.c
+oss_gpio.c
+oss_log.c
+oss_net.c
+F:\shangtao\dev-1\定位设备\code\device\util\oss_net.c(103) : warning C4101: 'ret' : unreferenced local variable
+oss_time.c
+oss_uart.c
+wcdma.c
+wcdma_cell_sel.c
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma_cell_sel.c(113) : warning C4013: 'CfgLock' undefined; assuming extern returning int
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma_cell_sel.c(119) : warning C4013: 'CfgUnlock' undefined; assuming extern returning int
+wcdma_cfg.c
+wcdma_encode.c
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma_encode.c(39) : warning C4244: '=' : conversion from 'unsigned short ' to 'unsigned char ', possible loss of data
+wcdma_oam.c
+wcdma_sm.c
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wcdma_sm.c(89) : warning C4101: 'tReq' : unreferenced local variable
+wg_common.c
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wg_common.c(162) : warning C4133: 'function' : incompatible types - from 'struct tag_wg_msg_head *' to 'char *'
+F:\shangtao\dev-1\定位设备\code\device\active\wcdma\wg\wg_common.c(121) : warning C4761: integral size mismatch in argument; conversion supplied
+Linking...
+Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSPB72C.tmp" with contents
+[
+/nologo /o"Debug/wg.bsc" 
+".\Debug\app.sbr"
+".\Debug\config.sbr"
+".\Debug\dlist.sbr"
+".\Debug\gsm.sbr"
+".\Debug\gsm_cfg.sbr"
+".\Debug\gsm_encode.sbr"
+".\Debug\gsm_oam.sbr"
+".\Debug\gsm_sm.sbr"
+".\Debug\modem.sbr"
+".\Debug\oss.sbr"
+".\Debug\oss_gpio.sbr"
+".\Debug\oss_log.sbr"
+".\Debug\oss_net.sbr"
+".\Debug\oss_time.sbr"
+".\Debug\oss_uart.sbr"
+".\Debug\wcdma.sbr"
+".\Debug\wcdma_cell_sel.sbr"
+".\Debug\wcdma_cfg.sbr"
+".\Debug\wcdma_encode.sbr"
+".\Debug\wcdma_oam.sbr"
+".\Debug\wcdma_sm.sbr"
+".\Debug\wg_common.sbr"]
+Creating command line "bscmake.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSPB72C.tmp"
+Creating browse info file...
+<h3>Output Window</h3>
+
+
+
+<h3>Results</h3>
+wg.exe - 0 error(s), 21 warning(s)
+</pre>
+</body>
+</html>
