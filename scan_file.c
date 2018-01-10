@@ -27,8 +27,8 @@ static void scan_local_time_get(struct tm *timenow, char *time_buf)
     time(&now);
 
     timenow = localtime(&now);
-    snprintf(time_buf,128,"%d-%d-%d-%d-%d-%d-%d.txt",  1900+timenow->tm_year, timenow->tm_mon, timenow->tm_mday,  timenow->tm_hour,timenow->tm_min, 
-        timenow->tm_sec, timenow->tm_min/ 30);
+    snprintf(time_buf,128,"%d-%d-%02d-%02d-%02d-%d.txt",  1900+timenow->tm_year, timenow->tm_mon+1, timenow->tm_mday,  timenow->tm_hour,timenow->tm_min, 
+         timenow->tm_min/ 30);
 }
 
 //longitude : 经度， latitude: 纬度

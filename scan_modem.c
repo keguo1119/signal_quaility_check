@@ -255,9 +255,9 @@ static int scan_modem_sim_oper_que(TModemLocal *pm)
         return RET_OK;
     }
 
-    if (strstr(tmp_buf, "CHN-MOBILE")) {
+    if (strstr(tmp_buf, "CHN-MOBILE") || strstr(tmp_buf, "CHINA MOBILE")) {
          pm->oper = CMCC;
-    } else if( strstr(tmp_buf, "CHN-UNICOM")) {
+    } else if( strstr(tmp_buf, "CHN-UNICOM") || strstr(tmp_buf, "CHINA UNICOM") ) {
          pm->oper = CUCC;
     } else if (strstr(tmp_buf, "CHN-CT") || strstr(tmp_buf, "CHINA TELECOM")) {
         pm->oper = CTCC;
@@ -393,10 +393,27 @@ static int scan_modem_signal_quality_info_get_H(TModem *ptModem, char *buf, eope
     if (strstr(pData, "LTE")) {
         pData = strchr(pData, ',');
         sscanf(pData+1, "%d,%d,%d,%d", &rssi, &rsrp, &sinr, &rsrq);
+
+        if( rsrp >= 0 && rsrp <=96 ) {
+            rsrp = rsrp - 140;
+        } else if ( 97 >= rsrp ){
+            rsrp = -44;
+        } else {
+            rsrp = -250;
+        }
         sprintf(buf, "%d,", rsrp);
     } else if (strstr(pData, "CDMA")) {
         pData = strchr(pData, ',');
         sscanf(pData+1, "%d,%d,%d", &rssi, &rscp, &ecio);
+
+        if( rscp >= 0 && rscp <=95 ) {
+            rscp = rscp - 120;
+        } else if ( 96 >= rscp ){
+            rscp = -25;
+        } else {
+            rscp = -250;
+        }        
+
         sprintf(buf, "%d,", rscp);
     } else if (strstr(pData, "GSM")) {
         pData = strchr(pData, ',');
@@ -405,7 +422,7 @@ static int scan_modem_signal_quality_info_get_H(TModem *ptModem, char *buf, eope
     } else {
         sprintf(buf, "0,");
     }
-   
+    
    printf("pData=%s, buf=%s\n",pData, buf);
 
 }
@@ -442,6 +459,14 @@ static int scan_modem_signal_quality_info_get_Y(TModem *ptModem, char *buf, eope
     sscanf(pData, "%d %d", &rssi, &ber);
     printf("pData=%s, rssi=%d, ber=%d\n", pData, rssi, ber);
 
+    if(31 == rssi) {
+        rssi = -51;
+    } else if(0 == rssi) {
+        rssi = -113;
+    } else {
+        rssi = -113 + 2 * rssi;
+    }
+
     sprintf(buf, "%d,", rssi);    
 }
 /////////////////////////////////////////////////////////////////////////////
@@ -453,7 +478,9 @@ static int scan_modem_mode_change_H(int mode)
     int  i, ret;
     char err_buf[128];
     char cmd_buf[128];
-    
+    char count;
+     estand_mode cur_mode;
+
     TModemLocal *pm = pModem;
 
     for (i = 0; i < MODEM_NUM; i++ ) {
@@ -470,37 +497,51 @@ static int scan_modem_mode_change_H(int mode)
         memset(cmd_buf, 0, 128);
         memset(err_buf, 0 ,128);
 
+        cur_mode = pm->mode;
+        printf("%s: index=%d, cur_mode = %d, mode=%d\n", __func__, i, cur_mode, mode);
         if(0 == mode ) {
+            if(cur_mode == LTE)
+                continue;
+
             snprintf(cmd_buf, 128, "AT^SYSCFGEX=\"%s\",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,\r", "03");
             ret = modem_atCmd_w_r(&pm->atModem, cmd_buf, "OK", NULL);
             if(ret != RET_OK) {
                 snprintf(err_buf, 128, "Modem %d set LTE mdoe faield!, cmd_buf=%s\n", pm->index, cmd_buf);
                 scan_file_error_info_save(err_buf);
+                continue;
             }
+            count++;
         } else if (1 == mode) {
+            if(cur_mode == TD_SCDMA || cur_mode == WCDMA || cur_mode == CDMA)
+                continue;
+
             snprintf(cmd_buf, 128, "AT^SYSCFGEX=\"%s\",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,\r", "02");
             ret = modem_atCmd_w_r(&pm->atModem, cmd_buf, "OK", NULL);
             if(ret != RET_OK) {
                 snprintf(err_buf, 128, "Modem %d set 3G mdoe faield!, cmd_buf=%s\n", pm->index, cmd_buf);
                 scan_file_error_info_save(err_buf);
             }
+            count++;
         }
+
+        oss_delay(50);
     }
 
-    oss_delay(15 * 1000);
+    
 
-    return RET_OK;
+    return count;
 }
 /////////////////////////////////////////////////////////////////////////////
 //将模块由3G 改为4G或者4G 改为3G, mode=0 设置为4G,1为3G YUGA
 static int scan_modem_mode_change_Y(int mode)
 {
     char cmd[128];
-    int  i, ret;
+    int  i, ret,  count = 0;
     char err_buf[128];
     char cmd_buf[128];
-    
-    int  md;
+    estand_mode cur_mode;
+
+    int  md ;
     char mode_info[128];
 
     TModemLocal *pm = pModem;
@@ -519,10 +560,19 @@ static int scan_modem_mode_change_Y(int mode)
         memset(cmd_buf, 0, 128);
         memset(err_buf, 0 ,128);
 
+        cur_mode = pm ->mode;
+         printf("%s: index=%d, cur_mode = %d, mode=%d\n", __func__, i, cur_mode, mode);
+    
         if(0 == mode) {
+            if(cur_mode == LTE)
+                continue;
+
             md = 38; //LTE only
             strcpy(mode_info, "LTE only");
         } else if( 1 == mode) {
+            if(cur_mode == TD_SCDMA || cur_mode == WCDMA || cur_mode == CDMA)
+                continue;
+
             switch (pm->oper) {
             case CMCC: 
                 md = 15; //LTE only
@@ -547,10 +597,13 @@ static int scan_modem_mode_change_Y(int mode)
         if(ret != RET_OK) {
             snprintf(err_buf, 128, "Modem %d set %s mdoe faield!, cmd_buf=%s\n", pm->index, mode_info);
             scan_file_error_info_save(err_buf);
-        }     
+            continue;
+        } 
+        count++; 
+        oss_delay(50);   
     }
 
-    return RET_OK;
+    return count;
 }
 /////////////////////////////////////////////////////////////////////////////
 int scan_modem_sim_mode_que(TModemLocal *pm)
@@ -561,10 +614,12 @@ int scan_modem_sim_mode_que(TModemLocal *pm)
 /////////////////////////////////////////////////////////////////////////////
 int scan_modem_mode_change(int mode)
 {
-    scan_modem_mode_change_H(mode);
-    scan_modem_mode_change_Y(mode);
+    int count_H, count_Y;
+    count_H = scan_modem_mode_change_H(mode);
+    count_Y = scan_modem_mode_change_Y(mode);
     
-    oss_delay(15 * 1000);
+    if(count_H > 0 || count_Y > 0)
+        oss_delay(15 * 1000);
 }
 ////////////////////////////////////////////////////////////////////////////////////
 int scan_modem_signal_quality_info_get(TModem *ptModem, char *buf, eoper_mode mode)
@@ -701,7 +756,7 @@ void scan_modem_init()
         if(ret) {
             scan_modem_sim_oper_que(pm);  //sim 卡运营商查询
         }
-//        scan_modem_status_check(pm);
+        scan_modem_status_check(pm);
 
         printf("i =%d, ret=%d, vaild=%d, fd=%d, oper=%d, mode=%d\n",  
             i, ret, pm->isvaild, pm->atModem.fd, pm->oper, pm->mode);
