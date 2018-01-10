@@ -255,11 +255,11 @@ static int scan_modem_sim_oper_que(TModemLocal *pm)
         return RET_OK;
     }
 
-    if (strstr(tmp_buf, "CHN-MOBILE") || strstr(tmp_buf, "CHINA MOBILE")) {
+    if (strstr(tmp_buf, "CHN-MOBILE") || strstr(tmp_buf, "CHINA MOBILE") || strstr(tmp_buf, "CMCC")) {
          pm->oper = CMCC;
-    } else if( strstr(tmp_buf, "CHN-UNICOM") || strstr(tmp_buf, "CHINA UNICOM") ) {
+    } else if( strstr(tmp_buf, "CHN-UNICOM") || strstr(tmp_buf, "CHINA UNICOM") || strstr(tmp_buf, "CUCC") ) {
          pm->oper = CUCC;
-    } else if (strstr(tmp_buf, "CHN-CT") || strstr(tmp_buf, "CHINA TELECOM")) {
+    } else if (strstr(tmp_buf, "CHN-CT") || strstr(tmp_buf, "CHINA TELECOM") || strstr(tmp_buf, "CTCC")) {
         pm->oper = CTCC;
     } else {
         pm->oper = NONE;
