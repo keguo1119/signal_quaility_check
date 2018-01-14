@@ -6,6 +6,7 @@ int main()
 {
 	char info[]="+CGREG:,4,3";
 	char info2[]="\"WCDMA\",60,57,59";
+	char info3[]=" 31, 99\r";
 	char cmd[128] = "\"%s\",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,";
 	char cmd_buf[128];
 	int i, j, k;
@@ -37,4 +38,7 @@ int main()
 	snprintf(cmd_buf, 128, "%s", cmd, "0302");
 
 	printf("cmd_buf=%s", cmd_buf);
+	sscanf(info3, "%d, %d", &i, &j);
+	printf("i=%d, j=%d\n",  i, j);
+	printf("info3=%s, i=%d, j=%d\n", info3, i, j);
 }

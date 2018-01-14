@@ -46,13 +46,15 @@ typedef enum at_cmd_index {
    
     AT_MODECONFIG_SET_Y, //运行商模式设置，运营商模式查询
     AT_NDISDUP_QUE  ,
-    AT_NDISDUP_SET   
+    AT_NDISDUP_SET_H,     //华为模块拨号
+    AT_QCRMCALL_SET_H     //域格模块拨号  
 }e_at_cmd;
 
 typedef struct TagModemLocal{
 
     int isvaild;
     int index;
+    int regis_ok;
     emanu_id  manu_id;
     eoper_mode oper;  //1 CM 移动，2 CN 联通 , 3 CT 电信
     estand_mode mode;

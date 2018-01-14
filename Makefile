@@ -3,8 +3,8 @@ OSS_PATH  = ./util
 oss_objs = $(OSS_PATH)/dlist.o $(OSS_PATH)/oss_uart.o  $(OSS_PATH)/oss_log.o $(OSS_PATH)/oss_net.o $(OSS_PATH)/config.o $(OSS_PATH)/oss.o $(OSS_PATH)/oss_time.o $(OSS_PATH)/oss_gpio.o
 oss_src = $(OSS_PATH)/dlist.c $(OSS_PATH)/oss_uart.c  $(OSS_PATH)/oss_log.c $(OSS_PATH)/oss_net.c $(OSS_PATH)/config.c $(OSS_PATH)/oss.c $(OSS_PATH)/oss_time.c $(OSS_PATH)/oss_gpio.c
 
-app_objs = scan_cfg.o   modem.o main.o scan_modem.o scan_file.o scan_gps.o  scan_logic_control.o
-app_src =  scan_cfg.c   modem.c main.c scan_modem.c scan_file.c scan_gps.c  scan_logic_control.c
+app_objs = scan_cfg.o   modem.o main.o scan_modem.o scan_file.o scan_gps.o  scan_logic_control.o scan_net.o
+app_src =  scan_cfg.c   modem.c main.c scan_modem.c scan_file.c scan_gps.c  scan_logic_control.c scan_net.c
 
 #scan_logic_control.c
 
@@ -20,7 +20,7 @@ app = scanner_2p
 #app = scanner
 
 hp206c: $(objs)
-	$(CC) $(objs) -DDEBUG  -lrt  -lpthread -lm   -o $(app)
+	$(CC) $(objs) -DDEBUG  -lrt  -lpthread -lm  -lunp -o $(app)
 	scp $(app) root@192.168.8.1:/root/scanner/ 
 
 objs:$(src)

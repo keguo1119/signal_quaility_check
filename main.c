@@ -19,13 +19,15 @@ void scanner_init()
 {
     scan_cfg_init(NULL, NULL);
     scan_modem_init();
+    scan_net_init();
 }
 
 void scanner_run()
 {
     scan_modem_run();
     scan_gps_run();
-    scan_logic_control_run();
+    scan_net_run();
+    scan_logic_control_run();   
 }
 
 int main(int argc, char ** argv)

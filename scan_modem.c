@@ -44,8 +44,8 @@ TModemAtCmdStr AtCmdStr[MAX_AT_CMD_NUMS] =  {
    
     {"AT^MODECONFIG",   "OK", ""},  //YUGA 模式选择  2 自动， 9 CDMA, 13 GSM, 38 LTE only, 14 WCDMA only, 15 TD-SCDMA only 
     {"AT^NDISDUP=?\r",  "OK", ""}, //AT_NDISDUP_QUE  ,
-    {"AT^NDISDUP=1,",   "OK", ""}, //AT_NDISDUP_SET, 0 断开网络连接，1连上网络   
-   
+    {"AT^NDISDUP=1,",   "OK", ""}, //HUAWEI,AT_NDISDUP_SET, 0 断开网络连接，1连上网络   
+    {"AT$QCRMCALL",     "OK", ""}, //HUAWEI,AT_NDISDUP_SET, 0 断开网络连接，1连上网络 
 };
 
 ////////////////////////////////////////////////////////
@@ -209,36 +209,45 @@ static int scan_modem_sim_status_check(TModem *ptModem)
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
 // AT+CGREG?  =?,1(5) 表示注册上网络
-static int scan_modem_net_register_check(TModem *ptModem)
+static int scan_modem_net_register_check(TModemLocal *pm )
 {
     char *pData,*pEnd;
     int ret;
     char  tmp_buf[MAX_INFO_LEN];
     int  en_flag, connet;
 
-    ret = modem_atCmd_w_r(ptModem, AtCmdStr[AT_CGREG_QUE].atCmd, AtCmdStr[AT_CGREG_QUE].atCmdOkResp,tmp_buf);
+    ret = modem_atCmd_w_r(&pm->atModem, AtCmdStr[AT_CGREG_QUE].atCmd, AtCmdStr[AT_CGREG_QUE].atCmdOkResp,tmp_buf);
     if(ret != RET_OK)
 	{
-		return RET_FAILED;
+		snprintf(tmp_buf, MAX_INFO_LEN, "%s: MODEM %d ERROR\n", __func__, pm->index);
+        scan_file_error_info_save(tmp_buf);
+        return RET_FAILED;
 	}
 
     pData = strstr(tmp_buf, "OK");
     if (pData != NULL) {
-        return RET_OK;
+        pData = strchr(tmp_buf, ':');
+        pData++;
+    } else {
+        return RET_FAILED;
     } 
 
-    sscanf(tmp_buf, "%s %d,%d", tmp_buf, &en_flag, &connet);
+    sscanf(pData, "%d,%d", &en_flag, &connet);
     if(1 == connet || 5 == connet) {
+        snprintf(tmp_buf, MAX_INFO_LEN, "INFO : MODEM %d :  connet the Net\n", pm->index);
+        scan_file_error_info_save(tmp_buf);
+        pm->regis_ok = 1;
         return RET_OK;
     } else {
-        snprintf(tmp_buf, MAX_INFO_LEN, "MODEM %d ERROR:  No Service or No RMB\n", ptModem->index);
+        pm->regis_ok = 0;
+        snprintf(tmp_buf, MAX_INFO_LEN, "MODEM %d ERROR:  No Service or No RMB\n", pm->index);
         scan_file_error_info_save(tmp_buf);
         return RET_FAILED;
     }
-    
+    printf("%s: pData=%s\n", __func__, pData);
 	return RET_OK;
 }
-/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////
 // sim 卡运营商查询
 static int scan_modem_sim_oper_que(TModemLocal *pm)
 {
@@ -606,6 +615,81 @@ static int scan_modem_mode_change_Y(int mode)
     return count;
 }
 /////////////////////////////////////////////////////////////////////////////
+//华为拨号, flag = 1, connecting, flag = 0, disconnect
+static int scan_modem_connet_net_H(TModemLocal *pm, int flag)
+{
+     char cmd[128];
+    int  i, ret,  count = 0;
+    char err_buf[128];
+    char cmd_buf[128];
+    estand_mode cur_mode;
+
+    int  md ;
+    char mode_info[128];
+
+    if(0 == pm->isvaild) {
+       return RET_FAILED;
+    }
+
+    if(YUGA == pm->manu_id) {
+        return RET_FAILED;
+    }
+    
+    if(!pm->regis_ok) {
+        return RET_FAILED;
+    }
+    
+    memset(cmd_buf, 0, 128);
+    memset(err_buf, 0 ,128);
+
+    snprintf(cmd_buf, 128, "%s%d\r", AtCmdStr[AT_NDISDUP_SET_H].atCmd, flag);       
+    ret = modem_atCmd_w_r(&pm->atModem, cmd_buf, "OK", NULL);
+    if(ret != RET_OK) {
+        snprintf(err_buf, 128, "ERROR: Modem %d %s set %d faield!\n", pm->index, scan_modem_connet_net_H, flag);
+        scan_file_error_info_save(err_buf);
+        return RET_FAILED;
+    }   
+    return RET_OK;    
+}
+/////////////////////////////////////////////////////////////
+//AT_QCRMCALL_SET_H
+//YUGA, flag = 1, connecting, flag = 0, disconnect //
+static int scan_modem_connet_net_Y(TModemLocal *pm, int flag)
+{
+     char cmd[128];
+    int  i, ret,  count = 0;
+    char err_buf[128];
+    char cmd_buf[128];
+    estand_mode cur_mode;
+
+    int  md ;
+    char mode_info[128];
+
+    if(0 == pm->isvaild) {
+        return RET_FAILED;
+    }
+
+    if(HUAWEI == pm->manu_id) {
+        return RET_FAILED;
+    }
+    
+    if(!pm->regis_ok) {
+        return RET_FAILED;
+    }
+        
+    memset(cmd_buf, 0, 128);
+    memset(err_buf, 0 ,128);
+
+    snprintf(cmd_buf, 128, "%s=1,%d\r", AtCmdStr[AT_QCRMCALL_SET_H].atCmd, flag);       
+    ret = modem_atCmd_w_r(&pm->atModem, cmd_buf, "OK", NULL);
+    if(ret != RET_OK) {
+        snprintf(err_buf, 128, "ERROR: Modem %d connect faield!\n", pm->index);
+        scan_file_error_info_save(err_buf);
+        return RET_FAILED;
+    } 
+    return RET_OK;        
+}
+///////////////////////////////////////////////////////////////////////////////
 int scan_modem_sim_mode_que(TModemLocal *pm)
 {
     scan_modem_sim_mode_que_H(pm);
@@ -628,6 +712,39 @@ int scan_modem_signal_quality_info_get(TModem *ptModem, char *buf, eoper_mode mo
     scan_modem_signal_quality_info_get_Y(ptModem, buf, mode);
 }
 /////////////////////////////////////////////////////////////////////////////
+int scan_modem_connet_net(TModemLocal *pm, int conn_flag)
+{
+    int ret, i;
+    char cmd_buf[128];
+
+    for(i = 0; i< MODEM_NUM -1; i++)
+    {
+        if(NULL == pm)
+            return RET_OK;
+
+        sprintf(cmd_buf, "udhcpc -i usb%d &",pm->index);
+
+        ret = scan_modem_connet_net_H(pm, conn_flag);
+        if(RET_OK == ret){
+            sleep(5);
+            system(cmd_buf);
+        }
+            
+        
+        ret = scan_modem_connet_net_Y(pm, conn_flag);
+        if(RET_OK == ret){ 
+            sleep(2);
+            system(cmd_buf);
+            sleep(3);
+        }
+        
+        printf("%s : cmd_buf=%s\n", __func__, cmd_buf);
+
+        pm++;
+    }
+
+}
+/////////////////////////////////////////////////////////////////////////////
 void scan_modem_status_check()
 {
     int i;
@@ -641,7 +758,7 @@ void scan_modem_status_check()
             continue;
         }
     
-        scan_modem_net_register_check(&pm->atModem);
+        scan_modem_net_register_check(pm);
         scan_modem_sim_mode_que(pm);
         oss_delay(50);
     }
@@ -664,6 +781,7 @@ static void *scan_modem_run_pthread()
     printf(" %s is staring ,pm=%p, pm+1=%p, pm+2=%p!\n", __func__, pm, pm+1, pm+2);
 
     scan_modem_status_check();
+    scan_modem_connet_net(pm, 1);
 
     while(1) {
         oss_delay(500);
@@ -683,10 +801,11 @@ static void *scan_modem_run_pthread()
             } else if (pm->manu_id == YUGA) {
                 scan_modem_signal_quality_info_get_Y(&pm->atModem, info_buf + strlen(info_buf), pm->oper);
             }
-            printf("modem %d -> signal quality: %s,oper=%d, mode=%d\n", pm->index, info_buf, pm->oper, pm->mode);
+            printf("modem %d -> signal quality: %s,oper=%d, mode=%d, regis_ok=%d\n", \
+                pm->index, info_buf, pm->oper, pm->mode, pm->regis_ok);
         }
 
-        scan_file_info_save(info_buf, &pModem[0], MODEM_NUM - 1);
+        scan_file_info_save(info_buf, pModem, MODEM_NUM - 1);
         memset(info_buf, 0, MAX_INFO_LEN);
 
     }

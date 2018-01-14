@@ -75,8 +75,9 @@ void scan_file_info_save(char *info_buf, TModemLocal *pm, int num)
             printf("created info save file failed\n");
             return ;
         }
-        printf("index=%d,oper=%d,mode=%d\n", pm->index, pm->oper, pm->mode);
+ 
         for( i = 0; i < num; i++) {
+            printf("%s: index=%d,oper=%d,mode=%d\n", __func__, pm->index, pm->oper, pm->mode);
             switch (pm->oper) {
             case NONE : 
                 snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "NONE-");
