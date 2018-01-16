@@ -46,6 +46,9 @@ void * scan_logic_control_run_pthread()
             scan_modem_run_flag_set(1);
         }
         oss_delay(5 * 1000);
+        system("cat $(ls ~/scanner/file/4G_signal_scan*  -tl | awk '{print $9}' | head -n 1) | head -n 2  > ~/scanner/file/signal_info.txt");
+        system("cat $(ls ~/scanner/file/4G_signal_scan*  -tl | awk '{print $9}' | head -n 1) | tail   >> ~/scanner/file/signal_info.txt");
+ 
     }
 }
 

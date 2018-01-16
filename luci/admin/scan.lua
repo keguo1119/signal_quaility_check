@@ -1,7 +1,6 @@
--- Copyright 2008 Steven Barth <steven@midlink.org>
--- Copyright 2011 Jo-Philipp Wich <jow@openwrt.org>
--- Licensed to the public under the Apache License 2.0.
-
+---- Copyright 2008 Steven Barth <steven@midlink.org>^M
+-- Copyright 2011 Jo-Philipp Wich <jow@openwrt.org>^M
+-- Licensed to the public under the Apache License 2.0.^M
 
 module("luci.controller.admin.scan", package.seeall)
 
@@ -12,7 +11,10 @@ function index()
 end
 
 function action_debug()
---        local dmesg = luci.sys.dmesg()
-        local dmesg = luci.util.exec("cat /root/scanner/err_info.txt")
-        luci.template.render("admin_scan/dmesg", {dmesg=dmesg})
+        os.execute("cat $(ls ~/scanner/file/4G_signal_scan*  -tl | awk '{print $9}' | head -n 1) | head -n 2  > ~/scanner/file/signal_info.txt")
+        os.execute("cat $(ls ~/scanner/file/4G_signal_scan*  -tl | awk '{print $9}' | head -n 1) | tail   >> ~/scanner/file/signal_info.txt")
+
+        local dmesg     = luci.util.exec("cat /root/scanner/err_info.txt")
+        local scan_info = luci.util.exec("cat /root/scanner/file/signal_info.txt")
+        luci.template.render("admin_scan/scan", {dmesg=dmesg, scan_info=scan_info})
 end

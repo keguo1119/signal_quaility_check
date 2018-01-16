@@ -34,7 +34,7 @@ TModemAtCmdStr AtCmdStr[MAX_AT_CMD_NUMS] =  {
     {"AT+CGREG?\r",     "OK", ""}, ///AT_CGREG_QUE   , 查询是否注册了网络，
     {"AT^CURC",         "OK", ""}, //AT_CURC_SET_H    , =0 关闭部分主动上报，比如信号强度的上报
     {"AT^STSF",         "OK", ""}, //AT_STSF_SET_H     , =0 关闭STK的主动上报 
-    {"AT+CMER=%s",      "OK", ""}, //AT_CMER_SET_Y關閉主動上報, 1,0,0,1打開，0,0,0,0 關閉
+    {"AT+CMER",      "OK", ""}, //AT_CMER_SET_Y 關閉主動上報, 1,0,0,1打開，0,0,0,0 關閉
    
     {"ATS0",            "OK", ""}, //ATS_SET_H         , =0 关闭自动接听
     {"AT^NVAUTO",       "OK", ""}, //ATS_NVAUTO_SET_Y         , =0 关闭自动接听

@@ -113,7 +113,7 @@ int scan_cfg_modem_oper_mode_get()
 	ret = read_conf_value_ext((int ) scan_usr_cfg_fp, buf, rev_buf, CFG_FILE_KEY_SPLIT, CFG_FILE_VALUE_BRACE);
 //	printf("0:%s, buf=%s, scan_usr_cfg_fp=%p\n", __func__, buf, scan_usr_cfg_fp);
 	if(ret > 0) {
-		printf("%s, rev_buf=%s, mode=%d\n", __func__, rev_buf, mode);
+//		printf("%s, rev_buf=%s, mode=%d\n", __func__, rev_buf, mode);
 		sscanf(rev_buf, "%d", &mode);
 //		printf("%s, rev_buf=%s, mode=%d\n", __func__, rev_buf, mode);
 
@@ -140,7 +140,7 @@ int scan_cfg_modem_auto_operate_flag_get()
 	ret = read_conf_value_ext((int ) scan_usr_cfg_fp, buf, rev_buf, CFG_FILE_KEY_SPLIT, CFG_FILE_VALUE_BRACE);
 	if(ret > 0) {
 		sscanf(rev_buf, "%d", &flag);
-		printf("%s, rev_buf=%s, flag=%d\n", __func__, rev_buf, flag);
+//		printf("%s, rev_buf=%s, flag=%d\n", __func__, rev_buf, flag);
 
 	} else {
 		return RET_FAILED;
