@@ -1,433 +1,432 @@
+/*************************************************************************************************/
 #include "oss.h"
 #include "oss_time.h"
-#include "config.h"
-#include "protocol_common.h"
-#include "modem.h"
+#include "oss_uart.h"
 
-//#define AUTO_START_SMS_ACK
-/***************************************************************************************************/
-#define   MAX_RESEND_COUNT        (2)
-#define   MODEM_IDLE_CHECK_TIME   (10)
-#define   MODEM_ALIVE_CHECK_TIME  (5) 
-#define   MODEM_RESTART_TIME      (15)
 
-#define  MAX_AT_CMD_RESP_SIZE  (1024)
-char abyAtCmdRespBuf[MAX_AT_CMD_RESP_SIZE];        
-
-int timeout_ms = 1000;
-
-int giVirtual = 1;
-
-#define  MAX_SEND_FAILED_NUM    (3)
-#define  MAX_SMS_INDEX   (256)
-#define  MAX_SMS_BUF_LEN (1024)
-char strSmsBuf[MAX_SMS_BUF_LEN];     //     
-/***************************************************************************************************/
-TModemAtCmdStr atGsmAtCmdStr[MAX_AT_CMD_NUM] = {
-/*AT_CMD_AT */	      {"AT\r", "OK", ""},
-/*AT_CMD_AT_CHUP */	  {"AT+CHUP\r",        "OK", ""},
-/*AT_CMD_AT_CMGS */   {"AT+CMGS=%s\r",     "\r\n>", ""},
-/*AT_CMD_AT_CMGD */   {"AT+CMGD",          "OK", ""},
-/*AT_CMD_AT_CMGL */   {"AT+CMGL=%d\r",     "OK", ""},	
-/*AT_CMD_AT_CMGF */   {"AT+CMGF=%d\r",     "OK", ""},	
-/*AT_CMD_AT_CSCA */   {"AT+CSCA",          "OK", ""},	
-/*AT_CMD_AT_CREG */   {"AT+CREG",          "OK", ""},	
-/*AT_CMD_AT_CIMI */   {"AT+CIMI\r",        "OK", "+CME ERROR"},	
-/*AT_CMD_ATE */       {"ATE",               "OK", ""},	
-/*AT_CMD_AT_CGMI */   {"AT+CGMI\r",         "OK", ""},	
-/*AT_CMD_AT_CGMM */   {"AT+CGMM\r",         "OK", ""},	
-/*AT_CMD_AT_CGMR */   {"AT+CGMR\r",         "OK", ""},
-/*AT_CMD_AT_CNUM */   {"AT+CNUM\r",         "OK", ""},		
-/*AT_CMD_AT_CMEE */   {"AT+CMEE",      "OK", ""}	,	
-/*AT_CMD_ATH */       {"ATH\r",        "OK", ""}	,
-/*AT_CMD_AT_CPMS */   {"AT+CPMS=\"ME\",\"SM\",\"MT\"\r",   "OK", ""},	
-/*AT_CMD_AT_CNMI */   {"AT+CNMI=0,0,0,0,1\r",   "OK", ""}	
-};
-
-TModemAtCmdStr atCdmaAtCmdStr[MAX_AT_CMD_NUM];
-/***************************************************************************************************/
-#ifdef WIN32
-DWORD WINAPI modem_thread(LPVOID lpPara);
-#else
-void  * modem_thread(void *lpPara);
+/////////////////////////////////////////////////////////////////////////////
+int oss_uart_set_parity(int fd, int databits, int stopbits, char parity);
+/////////////////////////////////////////////////////////////////////////////
+#ifndef  WIN32
+sem_t uart_read_res_sem;
 #endif
 
-int modem_hw_init(TModem *ptModem);
-int modem_is_active(TModem *ptModem);
-//int modem_echo(TModem *ptModem, int on);
-int modem_error_mode(TModem *ptModem, int index);
-
-int modem_phone_num_get(TModem *ptModem);
-int modem_manufacture_get(TModem *ptModem);
-int modem_hw_get(TModem *ptModem);
-//int modem_imsi_get(TModem *ptModem);
-//int modem_version_get(TModem *ptModem);
-int modem_info_get(TModem *ptModem);
-
-int  modem_at_cmd_fail_proc(TModem *ptModem);
-/***************************************************************************************************/
-void	modem_status_set(TModem *ptModem, 	int status)
+/////////////////////////////////////////////////////////////////////////////
+int oss_uart_get_stop_bit(int nStopBits)
 {
-	oss_get_cur_time(&ptModem->tCheckTime);
-	ptModem->iStatus = status;
-}
-/***************************************************************************************************/
-int modem_init(TModem *ptModem)
-{
-	int ret;
-	int nBaudRate = 9600; 
-	int nParity   = 0;
-	int nByteSize = 8; 
-	int nStopBits = 1;
-
-	ptModem->nBaudRate = nBaudRate; 
-	ptModem->nParity   = nParity;
-	ptModem->nByteSize = nByteSize; 
-	ptModem->nStopBits = nStopBits;
-
-	memset(&ptModem->tMsgQueue, 0, sizeof(ptModem->tMsgQueue));
-
-	// get modem  uart port
-	ret = CfgGetUartPort(ptModem->index, ptModem->abyUartPort);
-	if(ret != RET_OK )
+	switch(nStopBits)
 	{
-		return RET_NO_CONFIG;
+	case 1:
+		return 0;
+
+	case 15:
+		return 1;
+
+	case 2:
+		return 2;
+
+	default:
+		return -1;
+	}
+}
+/////////////////////////////////////////////////////////////////////////////
+int oss_uart_open(const char* pPort, int nBaudRate, int nParity, int nByteSize, int nStopBits)
+{
+#ifdef  WIN32
+
+    DCB dcb;        
+	HANDLE fd;
+	int error;
+	char buf[128];
+	BOOL  ret;
+
+    COMMTIMEOUTS timeouts = {    
+        100,        //  100 ms      
+        1,          //  1 ms        9600/8=1200, 1ms per char
+        500,        //  500 ms
+        1,          //  1 ms        9600/8=1200, 1ms per char
+        100};       //  100 ms
+   
+	memset(buf, 0, 128);
+	sprintf(buf, "\\\\.\\%s", pPort);
+    fd = CreateFile(buf,   
+            GENERIC_READ | GENERIC_WRITE,    
+            0, 
+			NULL,
+			OPEN_EXISTING,   
+            0,               
+            NULL);           
+   
+    if(fd == INVALID_HANDLE_VALUE) 
+	{
+		error = GetLastError(); 
+		return -1;        
 	}
 
-	// modem init
-	ret = modem_hw_init(ptModem);
-	if(ret != RET_OK)
+    ret = GetCommState(fd, &dcb);        
+	if(FALSE == ret)
 	{
-		Log(OS_LOG_DEBUG, "modem hardware init failed: %s", ptModem->abyUartPort);
+		return -1;
+	}
+	
+	dcb.DCBlength= sizeof(DCB);
+    dcb.BaudRate = nBaudRate;
+    dcb.ByteSize = nByteSize;
+    dcb.Parity   = nParity;
+    dcb.StopBits = oss_uart_get_stop_bit(nStopBits);
+	dcb.fOutX    = 1;
+	dcb.fInX     = 1;
+
+    ret = SetCommState(fd, &dcb);        
+	if(FALSE == ret)
+	{
+		return -1;
+	}
+   
+    ret = SetupComm(fd, 4096, 1024);     // input buffer and output buffer
+	if(FALSE == ret)
+	{
 		return -1;
 	}
 
-	return 1;
-}
-/***************************************************************************************************/
-int  modem_hw_init(TModem *ptModem)
-{
-	int ret = 0;
-
-	ptModem->iStatus = MODEM_IDLE;
+    ret = SetCommTimeouts(fd, &timeouts);    
+	if(FALSE == ret)
+	{
+		return -1;
+	}
 	
-	// ensure modem is present
-	ret = modem_open(ptModem); 
-	if(ret != RET_OK)
-	{
-		Log(OS_LOG_DEBUG, "modem open failed:%s", ptModem->abyUartPort);
-		return RET_FAILED;
-	}
-	ptModem->iStatus = MODEM_OPENED;
+    return (int)fd;
 
-	modem_error_mode(ptModem, 2);
-
-	ret = modem_info_get(ptModem);
-	if(ret != RET_OK)
-	{
-		Log(OS_LOG_ERR, "modem info get failed", "");
-		return RET_FAILED;
-	}
-
-	// ensure sim card is present
-	ret = modem_imsi_get(ptModem);
-	if(ret != RET_OK)
-	{
-		oss_get_cur_time(&ptModem->tCheckTime);
-		Log(OS_LOG_ERR, "modem imsi get failed", "");
-		return RET_FAILED;
-	}
-
-	// active in network
-	ret = modem_is_active(ptModem);
-	if(ret != RET_OK)
-	{
-		Log(OS_LOG_ERR, "modem active in network failed", "");
-		return RET_FAILED;
-	}
-
-	ptModem->iStatus = MODEM_REG_IN_NET;
-
-	return RET_OK;
-}
-
-/***************************************************************************************************/
-int Modem_reset(TModem *ptModem)
-{
-	int ret;
-	int tryCount = 1;
-	char atCmd[] = "AT+CRESET\r";  //for SIM7100C
-	char atCmdOkResp[] = "OK";
-
-	if(ptModem->fd == 0)
-	{
-		return RET_FAILED;
-	}
-
-	while(tryCount)
-	{
-		tryCount--;
-		/* send AT and resp ok */
-		ret = modem_at_cmd_send(ptModem, atCmd);
-		if(ret != RET_OK)
-		{
-			continue;
-		}
-
-		oss_delay(1000*10);
-		ret = modem_at_cmd_wait_rsp(ptModem, atCmdOkResp, NULL);
-		if(ret != RET_OK)
-		{
-			continue;
-		}
-		else
-		{
-			return RET_OK;
-		}
-	}
-
-	modem_at_cmd_fail_proc(ptModem);
-
-	return RET_FAILED;
-}
-
-/***************************************************************************************************/
-int ModemCheck(TModem *ptModem)
-{
-	int ret;
-	int tryCount = 5;
-
-	if(ptModem->fd == 0)
-	{
-		return RET_FAILED;
-	}
-
-	while(tryCount)
-	{
-		tryCount--;
-		/* send AT and resp ok */
-		ret = modem_at_cmd_send(ptModem, atGsmAtCmdStr[AT_CMD_AT].atCmd);
-		if(ret != RET_OK)
-		{
-			continue;
-		}
-		
-		ret = modem_at_cmd_wait_rsp(ptModem, atGsmAtCmdStr[AT_CMD_AT].atCmdOkResp, NULL);
-		if(ret != RET_OK)
-		{
-			continue;
-		}
-		else
-		{
-			return RET_OK;
-		}
-	}
-
-	//modem_at_cmd_fail_proc(ptModem);
-
-//	Log(OS_LOG_ERR, "modem AT cmd check failed: %s", ptModem->abyUartPort);
-
-	return RET_FAILED;
-}
-/***************************************************************************************************/
-int modem_info_get(TModem *ptModem)
-{
-	modem_hw_get(ptModem);
-
-	modem_manufacture_get(ptModem);
-
-	modem_version_get(ptModem);
-
-	modem_phone_num_get(ptModem);
-
-	return RET_OK;
-}
-
-/***************************************************************************************************/
-int modem_open(TModem *ptModem)
-{
-	int ret;
-
-	/* open uart port */
-	ret = oss_uart_open((const char*)ptModem->abyUartPort, ptModem->nBaudRate, ptModem->nParity, ptModem->nByteSize, ptModem->nStopBits);
-	if(ret < 0)
-	{
-		return RET_FAILED;
-	}
-	ptModem->fd = ret;
-	
-	ret = ModemCheck(ptModem);
-	if(ret != RET_OK)
-	{
-		ModemClose(ptModem);
-		return RET_FAILED;
-	}
-
-	ret = modem_echo(ptModem, 0);
-	if(ret != RET_OK)
-	{
-		ModemClose(ptModem);
-		return RET_FAILED;
-	}
-
-	return RET_OK;
-}
-/***************************************************************************************************/
-int ModemClose(TModem *ptModem)
-{
-	int tmp;
-	TPlmn  tPlmn;
-	char  buf[MAX_UART_PORT_LEN];
-
-	tmp = ptModem->index;
-	memcpy(buf, ptModem->abyUartPort, MAX_UART_PORT_LEN);
-	memcpy(&tPlmn, &ptModem->tPlmn, sizeof(TPlmn));
-
-#ifdef WIN32
-	CloseHandle((FILE *)ptModem->fd);
 #else
-	close(ptModem->fd);
+
+	int fd, ret; /* File descriptor for the port */
+	struct termios options;
+	char cParity;
+    char err_buf[128];
+	
+    /* ttyS0 is reserved for system use */
+	fd = open(pPort, O_RDWR | O_NOCTTY | O_NDELAY);
+	if (fd == -1)
+	{
+        snprintf(err_buf, 128, "open_port: Unable to open %s ", pPort);
+		perror(err_buf);
+		return -1;
+	}
+
+	// setup speed
+	tcgetattr(fd, &options);      
+    //cfsetispeed(&options, B9600);
+    //cfsetospeed(&options, B9600);
+    tcflush(fd, TCIOFLUSH);
+    switch( nBaudRate )
+    {
+    case 2400:
+        cfsetispeed(&options, B2400);
+        cfsetospeed(&options, B2400);
+        break;
+    case 4800:
+        cfsetispeed(&options, B4800);
+        cfsetospeed(&options, B4800);
+        break;
+    case 9600:
+        cfsetispeed(&options, B9600);
+        cfsetospeed(&options, B9600);
+        break;
+    case 19200:
+        cfsetispeed(&options, B19200);
+        cfsetospeed(&options, B19200);
+        break;		
+    case 38400:
+        cfsetispeed(&options, B38400);
+        cfsetospeed(&options, B38400);
+        break;				
+    case 115200:
+        cfsetispeed(&options, B115200);
+        cfsetospeed(&options, B115200);
+        break;
+    default:
+		return -1;
+    }
+	
+    ret = tcsetattr(fd, TCSANOW, &options);
+    if(ret != 0 )
+    {     
+       perror("tcsetattr error");
+	   close(fd);
+       return -1;
+    }
+	
+    tcflush(fd,TCIOFLUSH);
+	//fcntl(fd, F_SETFL, FNDELAY);  // immediately return
+	fcntl(fd, F_SETFL, 0);
+	
+	/* get the current options */
+	tcgetattr(fd, &options);
+	
+	/* set raw input, 1 second timeout */
+	options.c_cflag     |= (CLOCAL | CREAD);
+	options.c_lflag     &= ~(ICANON | ECHO | ECHOE | ISIG); /* Choosing raw input */
+	options.c_oflag     &= ~OPOST;  /* Choosing raw output */
+	options.c_cc[VMIN]  = 0;
+	/* options.c_cc[VTIME] = 10; */ //100ms
+	options.c_cc[VTIME] = 0;
+	
+	/* set the options */
+	tcsetattr(fd, TCSANOW, &options);
+
+    switch( nParity )
+    {
+    case 0:
+        cParity = 'N';
+        break;
+    case 1:
+        cParity = 'O';
+        break;
+    case 2:
+        cParity = 'E';
+        break;
+    case 3:
+        cParity = 'S';
+        break;
+    default:
+        fprintf(stderr, "Unsupported parity.\n");
+        return -1;
+    }
+	
+	ret = oss_uart_set_parity(fd, nByteSize, nStopBits, cParity);
+	if(ret == -1)
+	{
+		close(fd);
+		return -1;
+	}
+	
+    //extern int sem_init __P ((sem_t *__sem, int __pshared, unsigned int __value));
+	//pshared is 0, means it only share for all thread
+	sem_init(&uart_read_res_sem,0,1);  //initial resource number is 1
+	
+	return (fd);
+
 #endif
-
-	memset(ptModem, 0, sizeof(TModem));
-
-	memcpy(&ptModem->tPlmn, &tPlmn, sizeof(TPlmn));
-	memcpy(ptModem->abyUartPort, buf, MAX_UART_PORT_LEN);
-	ptModem->index = tmp;
-
-	modem_status_set(ptModem, MODEM_IDLE);
-
-	return RET_OK;
 }
-/***************************************************************************************************/
-int modem_echo(TModem *ptModem, int on)
+   
+/////////////////////////////////////////////////////////////////////////////
+int oss_uart_close(int fd)
 {
-	/* get imsi */
-	int ret;
-	char buf[128];
+#ifdef WIN32
+    return CloseHandle((HANDLE)fd);
+#else
+	close(fd);
+	return;
+#endif
+}
+   
+/////////////////////////////////////////////////////////////////////////////
+int oss_uart_write(int fd, char * pData, int nLength)
+{
+#ifdef WIN32
+    COMSTAT ComStat;
+    DWORD dwErrorFlags;
+    DWORD dwNumWrite;    
+    BOOL  ret;
 
-	memset(buf, 0, 128);
-	sprintf(buf, "%s%d\r", atGsmAtCmdStr[AT_CMD_ATE].atCmd, on);
+    ClearCommError((HANDLE)fd, &dwErrorFlags, &ComStat);
+    ret = WriteFile((HANDLE)fd, pData, (DWORD)nLength, &dwNumWrite, NULL);
+    PurgeComm((HANDLE)fd, PURGE_RXABORT | PURGE_TXABORT | PURGE_TXCLEAR | PURGE_RXCLEAR);
+	return ret;
 
-	ret = modem_at_cmd_send(ptModem, buf);
-	if(ret != RET_OK)
+#else
+
+	int nByte;
+    sem_wait(&uart_read_res_sem);  //sem_wait will be blocked until sem>0
+	nByte = write(fd, pData, nLength);
+	sem_post(&uart_read_res_sem);
+	if(nByte > 0)
 	{
-		Log(OS_LOG_ERR, "modem AT cmd ATE send failed", "");
-		return RET_FAILED;
+		return nByte;
+	}
+	else
+	{
+		tcflush(fd, TCOFLUSH); 
+		return -1;
 	}
 
-	ret = modem_at_cmd_wait_rsp(ptModem, atGsmAtCmdStr[AT_CMD_ATE].atCmdOkResp, NULL);
-	if(ret != RET_OK)
-	{
-		return RET_FAILED;
-	}
-
-	return RET_OK;
+#endif
 }
-/***************************************************************************************************/
-int modem_imsi_get(TModem *ptModem)
+   
+/////////////////////////////////////////////////////////////////////////////
+int oss_uart_read(int fd, char *atCmd, char * pData, int nLength)
 {
-	/* get imsi */
-	int ret;
-	char buf[128];
-	int tryCount = 5;
-	memset(buf, 0, 128);
+#ifdef WIN32
+    COMSTAT ComStat;
+    DWORD dwErrorFlags;
+    DWORD dwNumRead;    
+    BOOL  ret;
 
-	while(tryCount)
+    ClearCommError((HANDLE)fd, &dwErrorFlags, &ComStat);
+	nLength = ComStat.cbInQue;
+	if (nLength <= 0) 
 	{
-		oss_delay(1000);
+		printf("fd:%d, no data in serial port when reading, \n", fd);
+		return 0;
+	}
+	
+    ret = ReadFile((HANDLE)fd, pData, (DWORD)nLength, &dwNumRead, NULL);
+	if (!ret) 
+	{
+		printf("fd:%d, serial port read failed, \n", fd);
+		return 0;
+	} 
+	
+    return (int)dwNumRead;
 
-		tryCount--;
-		ret = modem_at_cmd_send(ptModem, atGsmAtCmdStr[AT_CMD_AT_CIMI].atCmd);
-		if(ret != RET_OK)
+#else
+    int readByte = 0; 
+    int len = 0; 
+	int i;
+	int cnt = 0;
+	char read_buf[1024];
+	
+    sem_wait(&uart_read_res_sem);  //sem_wait will be blocked until sem>0
+	bzero(read_buf, sizeof(read_buf));
+	while(1) 
+	{
+	    if( (readByte = read(fd, read_buf, sizeof(read_buf))) > 0 )
 		{
-			continue;
+			for(i = len; i < (len + readByte); i++)
+			{
+			    pData[i] = read_buf[i - len];
+			}
+			len += readByte;
+			//if "OK" or "ERROR" is read, break
+			if (strstr(pData, atCmd) != NULL) break;
+			if (strstr(pData, "ERROR") != NULL)
+			{
+				len = 0;
+				tcflush(fd, TCIFLUSH); 
+			    break;
+			}
 		}
-		
-		ret = modem_at_cmd_wait_rsp(ptModem, atGsmAtCmdStr[AT_CMD_AT_CIMI].atCmdOkResp, buf);
-		if(ret != RET_OK)
-		{
-			continue;	
-		}
-		
-		ptModem->tPlmn.isValid = 1;
-		memcpy(ptModem->tPlmn.abyMcc, buf+2, 3);
-		memcpy(ptModem->tPlmn.abyMnc, buf+5, 2);
-		
-		memcpy(ptModem->abyImsi, buf+2, MAX_IMSI_LEN);
-		ptModem->abyImsi[MAX_IMSI_LEN-1] = 0;
-		
-		Log(OS_LOG_ERR, "modem is ok: %s ", ptModem->abyUartPort);
-		Log(OS_LOG_ERR, "modem imsi: %s ", buf+2);
-
-		return RET_OK;
+		//printf("[oss_uart_read] atCmd: %s, readByte:%d \n", atCmd, readByte);
+		cnt++;
+		/* if (1)no data is read; (2)"OK" or "ERROR" isn't found in data, 
+		   when cnt is up to 32, exit from loop */
+		if (cnt > 31) break; 
+		oss_delay(5); 
 	}
+	pData[len] = '\0'; 
+    sem_post(&uart_read_res_sem);
+	return len; //len>0, means data is read from uart port
+	//readByte = read(fd, pData, nLength);
+	//return readByte;
 
-	Log(OS_LOG_ERR, "get modem imsi failed: %s ", ptModem->abyUartPort);
-
-	return RET_FAILED;
+#endif
 }
 
-/***************************************************************************************************/
-int modem_is_active(TModem *ptModem)
+
+/////////////////////////////////////////////////////////////////////////////
+int oss_uart_set_parity(int fd, int databits, int stopbits, char parity)
 {
-	/* reg on the network */
+#ifdef WIN32
+
+	return 1;
+
+#else
+
+    struct termios Opt;
+    if(tcgetattr(fd, &Opt) != 0)
+    {
+        perror("tcgetattr fd");
+        return FALSE;
+    }
+    Opt.c_cflag |= (CLOCAL | CREAD);        //æ¶“â‚¬é–¿ç†¸æ»é·çƒ½æ•“é‚ã‚†å«¹é–¿ç†¸æ»é·é£å¸¿ç’‹å¬®æ•“ç›æ¥‹æ‹·
+
+    switch(databits)        //é–¿ç†¸æ»é·çƒ½æ•“é‚ã‚†å«¹é–¿ç†¸æ»é·çƒ½æ•“é‚ã‚†å«¹æµ£å¶‰æ•“é‚ã‚†å«¹
+    {
+    case 7:
+        Opt.c_cflag &= ~CSIZE;
+        Opt.c_cflag |= CS7;
+        break;
+    case 8:
+        Opt.c_cflag &= ~CSIZE;
+        Opt.c_cflag |= CS8;
+        break;
+    default:
+        fprintf(stderr, "Unsupported data size.\n");
+        return -1;
+    }
+
+    switch(parity)            //é–¿ç†¸æ»é·çƒ½æ•“é‚ã‚†å«¹éï¿ æ•“é‚ã‚†å«¹æµ£ï¿½
+    {
+    case 'n':
+    case 'N':
+        Opt.c_cflag &= ~PARENB;        //é–¿ç†¸æ»é·çƒ½æ•“é™î‚¬ç¶‡é·çƒ½æ•“æåŒ¡æ‹·
+        Opt.c_iflag &= ~INPCK;        //enable parity checking
+        break;
+    case 'o':
+    case 'O':
+        Opt.c_cflag |= PARENB;        //enable parity
+        Opt.c_cflag |= PARODD;        //é–¿ç†¸æ»é·é”‹ç‰é–¿ç†¸æ»é·ï¿½
+        Opt.c_iflag |= INPCK;         //disable parity checking
+        break;
+    case 'e':
+    case 'E':
+        Opt.c_cflag |= PARENB;        //enable parity
+        Opt.c_cflag &= ~PARODD;        //é‹èˆµç‰é–¿ç†¸æ»é·ï¿½
+        Opt.c_iflag |= INPCK;            //disable pairty checking
+        break;
+    case 's':
+    case 'S':
+        Opt.c_cflag &= ~PARENB;        //é–¿ç†¸æ»é·çƒ½æ•“é™î‚¬ç¶‡é·çƒ½æ•“æåŒ¡æ‹·
+        Opt.c_cflag &= ~CSTOPB;        //??????????????
+        Opt.c_iflag |= INPCK;            //disable pairty checking
+        break;
+    default:
+        fprintf(stderr, "Unsupported parity.\n");
+        return -1;    
+    }
+
+    switch(stopbits)        //é–¿ç†¸æ»é·çƒ½æ•“é‚ã‚†å«¹é‹æ»„î„›æµ£ï¿½
+    {
+    case 1:
+        Opt.c_cflag &= ~CSTOPB;
+        break;
+    case 2:
+        Opt.c_cflag |= CSTOPB;
+        break;
+    default:
+        fprintf(stderr, "Unsupported stopbits.\n");
+        return -1;
+    }
 
 /*
-ÃüÁîÏìÓ¦(Response):
+    opt.c_cflag |= (CLOCAL | CREAD);
 
- +CREG :<mode>,<stat> [,<lac>,<ci>]
+    opt.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+ 
+    opt.c_oflag &= ~OPOST;
+    opt.c_oflag &= ~(ONLCR | OCRNL);    
+ 
+    opt.c_iflag &= ~(ICRNL | INLCR);
+    opt.c_iflag &= ~(IXON | IXOFF | IXANY);    
 
-²ÎÊıËµÃ÷:
-
- <mode>
- 0 : ½ûÖ¹ÍøÂç×¢²áÖ÷¶¯Ìá¹©½á¹û´úÂë£¨Ä¬ÈÏÉèÖÃ£©
- 1 : ÔÊĞíÍøÂç×¢²áÖ÷¶¯Ìá¹©½á¹û´úÂë£º+CREG£º<stat>
- 2 : ÆôÓÃÍøÂç×¢²áºÍÎ»ÖÃĞÅÏ¢·ÇÇëÇó½á¹ûÂë+CREG: <stat>[,<lac>,<ci>]
-
- 0£ºÎ´×¢²á£¬ÖÕ¶Ëµ±Ç°²¢Î´ÔÚËÑÑ°ĞÂµÄÔËÓªÉÌ
- 1£ºÒÑ×¢²á±¾µØÍøÂç
- 2£ºÎ´×¢²á£¬ÖÕ¶ËÕıÔÚËÑÑ°»ùÕ¾
- 4£ºÎ´Öª´úÂë
- 5£ºÒÑ×¢²á£¬´¦ÓÚÂşÓÎ×´Ì¬	
+    tcflush(fd, TCIFLUSH);
+    Opt.c_cc[VTIME] = 0;        //é–¿ç†¸æ»é·çƒ½æ•“é­î‚¤î„²é·é”‹æ¤‚
+    Opt.c_cc[VMIN]  = 0;        //Update the Opt and do it now
 */
-	char buf[128];
-	int ret, tmp;
+    Opt.c_cflag &= ~CRTSCTS; /* Disable hardware flow control */
+    Opt.c_iflag &= ~(IXON | IXOFF | IXANY);  /* Disable software flow control */
+	tcflush(fd, TCIFLUSH);
 
-	memset(buf, 0, 128);
+    if(tcsetattr(fd, TCSANOW, &Opt) != 0)
+    {
+        perror("tcsetattr fd");
+        return -1;
+    }
 
-	sprintf(buf, "%s?\r", atGsmAtCmdStr[AT_CMD_AT_CREG].atCmd);
-	ret = modem_at_cmd_send(ptModem, buf);
-	if(ret != RET_OK)
-	{
-		return RET_FAILED;
-	}
+    return 1;
 
-	memset(buf, 0, 128);
-	ret = modem_at_cmd_wait_rsp(ptModem, atGsmAtCmdStr[AT_CMD_AT_CREG].atCmdOkResp, buf);
-	if(ret != RET_OK)
-	{
-		return RET_FAILED;
-	}
-
-	sscanf(buf, "\r\n+CREG: %d,%d", &tmp, &ret);
-	if((ret != 1) && (ret != 5))
-	{
-		Log(OS_LOG_ERR, "modem reg in net failed: %s", buf);
-		return RET_FAILED;
-	}
-
-	Log(OS_LOG_INFO, "modem reg in net: %s", buf);
-
-	return RET_OK;
+#endif
 }
-
-/***************************************************************************************************/
-int ModemDeactive(TModem *ptModem)
-{
-	/* unreg on the network */
-//	int ret;
-
 
 	return 0;
 }

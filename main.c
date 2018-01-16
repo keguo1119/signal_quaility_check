@@ -25,7 +25,7 @@ void scanner_init()
 void scanner_run()
 {
     scan_modem_run();
-    scan_gps_run();
+ //   scan_gps_run();
     scan_net_run();
     scan_logic_control_run();   
 }

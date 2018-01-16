@@ -10,7 +10,7 @@ local conf  = require "luci.config"
 local m, s, o
 local has_ntpd = fs.access("/usr/sbin/ntpd")
 
-m = Map("scan", translate("Config"), translate("Here you can chose how the signal scanner equitment works ."
+m = Map("scan", translate("Config"), translate("Here you can chose how the signal scanner equitment works ."))
 m:chain("luci")
 
 s = m:section(TypedSection, "mode", translate("System Properties"))

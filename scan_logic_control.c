@@ -10,11 +10,16 @@
 #include "scan_cfg.h"
 #include "scan_file.h"
 #include "scan_modem.h"
-
+#include "scan_net.h"
 pthread_t control_t;
 
 static int scan_oper_mode = 0;        //0:4G, 1:3G
 static int scan_auto_oper_flag = 0;
+
+void scan_logic_gps_get(float *lat, float *lon)
+{
+    scan_net_gps_info_get(lat, lon);
+}
 
 void scan_logic_oper_mode_set(int mode)
 {

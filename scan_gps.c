@@ -1,11 +1,12 @@
 #include "scan_gps.h"
+#include "scan_net.h"
 #include "oss.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 
 static float lon = 39.48327, lat = 129.43280;
-    pthread_t gps_id;
+pthread_t gps_id;
 
 void scan_gps_info_get(float *lon_t, float *lat_t)
 {

@@ -311,7 +311,7 @@ int oss_uart_read(int fd, char *atCmd, char * pData, int nLength)
 		/* if (1)no data is read; (2)"OK" or "ERROR" isn't found in data, 
 		   when cnt is up to 32, exit from loop */
 		if (cnt > 31) break; 
-		oss_delay(5); 
+		oss_delay(20); 
 	}
 	pData[len] = '\0'; 
     sem_post(&uart_read_res_sem);

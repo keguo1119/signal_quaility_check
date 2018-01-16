@@ -7,6 +7,7 @@
 //#include "protocol_common.h"
 #include "main.h"
 #include "scan_modem.h"
+#include "scan_logic_control.h"
 
 #define MAX_INFO_LEN 128
 
@@ -20,6 +21,8 @@ static char *file_head_name = "4G_signal_scan";
 static FILE *info_file_fp = NULL;
 static FILE *err_info_file_fp = NULL;
 
+static int modem_info_num = 0;
+//////////////////////////////////////////////////////////////////
 static void scan_local_time_get(struct tm *timenow, char *time_buf)
 {
     time_t now;
@@ -75,7 +78,22 @@ void scan_file_info_save(char *info_buf, TModemLocal *pm, int num)
             printf("created info save file failed\n");
             return ;
         }
- 
+
+         for( i = 0; i < num; i++) {
+            if(YUGA == pm->manu_id)
+                snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "Modem %d is YUGA,");
+            else if(HUAWEI == pm->manu_id)
+                snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "Modem %d is HUAWEI,");
+            
+            pm++;
+        }
+        pm = pm - num + 1;
+
+        snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "\n");
+        fputs(tmp_buf,  info_file_fp); 
+
+        memset(tmp_buf, 0, MAX_INFO_LEN);
+        snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "NUM,");
         for( i = 0; i < num; i++) {
             printf("%s: index=%d,oper=%d,mode=%d\n", __func__, pm->index, pm->oper, pm->mode);
             switch (pm->oper) {
@@ -121,9 +139,11 @@ void scan_file_info_save(char *info_buf, TModemLocal *pm, int num)
         snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "lat,lon\n");
         fputs(tmp_buf,  info_file_fp); 
     }
-    scan_gps_info_get(&lon_t, &lat_t);
 
-    snprintf(tmp_buf, MAX_INFO_LEN,"%s%f,%f\n" ,info_buf, lat_t, lon_t);
+    modem_info_num++;
+//    scan_gps_info_get(&lon_t, &lat_t);
+    scan_logic_gps_get(&lat_t, &lon_t);
+    snprintf(tmp_buf, MAX_INFO_LEN,"%d,%s%f,%f\n" ,modem_info_num, info_buf, lat_t, lon_t);
 
     fputs(tmp_buf,  info_file_fp); 
     fflush(info_file_fp);

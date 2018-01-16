@@ -12,7 +12,7 @@
 
 static char *scan_sys_cfg_path = "./";
 static char *scan_sys_cfg_file = "sys_cfg";
-static char *scan_usr_cfg_path = "/etc/config/";
+static char *scan_usr_cfg_path = "/etc/config";
 static char *scan_usr_cfg_file = "scan";
 
 extern const char *sys_cfg_path;
@@ -57,7 +57,7 @@ int scan_cfg_file_open( const FILE *sys_cfg_fp,  const FILE *usr_cfg_fp)
     else
     {
 		memset(file_name_buf, 0, 128);
-        snprintf(file_name_buf, 128, "%s%s", scan_usr_cfg_path, scan_usr_cfg_file);
+        snprintf(file_name_buf, 128, "%s/%s", scan_usr_cfg_path, scan_usr_cfg_file);
         scan_usr_cfg_fp = (FILE *)open_conf_file(file_name_buf);
     }
 	if(scan_usr_cfg_fp == NULL)
@@ -85,7 +85,7 @@ int scan_cfg_modem_oper_mode_get()
 	ret = read_conf_value_ext((int ) scan_usr_cfg_fp, buf, rev_buf, CFG_FILE_KEY_SPLIT, CFG_FILE_VALUE_BRACE);
 //	printf("0:%s, buf=%s, scan_usr_cfg_fp=%p\n", __func__, buf, scan_usr_cfg_fp);
 	if(ret > 0) {
-//		printf("%s, rev_buf=%s, mode=%d\n", __func__, rev_buf, mode);
+		printf("%s, rev_buf=%s, mode=%d\n", __func__, rev_buf, mode);
 		sscanf(rev_buf, "%d", &mode);
 //		printf("%s, rev_buf=%s, mode=%d\n", __func__, rev_buf, mode);
 

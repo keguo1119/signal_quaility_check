@@ -2,7 +2,7 @@
 
 cp scan /etc/config
 
-cp amdin/scan.lua /usr/lib/lua/luci/controller/admin
+cp admin/scan.lua /usr/lib/lua/luci/controller/admin
 
 mkdir /usr/lib/lua/luci/model/cbi/admin_scan
 cp model/scan.lua /usr/lib/lua/luci/model/cbi/admin_scan
