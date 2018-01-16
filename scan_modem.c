@@ -496,10 +496,7 @@ static int scan_modem_mode_change_H(int mode)
         pm = &pModem[i];
 
         if(0 == pm->isvaild) {
-            continue;
-
-
-            
+            continue;           
         }
 
         if(HUAWEI != pm->manu_id) {
@@ -888,14 +885,14 @@ void scan_modem_init()
     }
 
     printf(" %s is ok!\n", __func__);
-
+    scan_modem_status_check(pm);
     mode = scan_cfg_modem_oper_mode_get();
    
     scan_logic_oper_mode_set(mode);
     
     ret = scan_modem_mode_change(mode); 
 
-     scan_modem_status_check(pm);
+
  
 }
 ////////////////////////////////////

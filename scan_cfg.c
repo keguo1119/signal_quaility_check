@@ -23,6 +23,30 @@ extern const char *usr_cfg_file;
 /////////////////////////////////////////////
 static FILE *scan_sys_cfg_fp = NULL;
 static FILE *scan_usr_cfg_fp = NULL;
+
+////////////////////////////////////////////////
+int scan_cfg_usr_cfg_file_open()
+{
+	char file_name_buf[128];
+
+	if(NULL == scan_usr_cfg_fp) {
+		memset(file_name_buf, 0, 128);
+        snprintf(file_name_buf, 128, "%s/%s", scan_usr_cfg_path, scan_usr_cfg_file);
+        scan_usr_cfg_fp = (FILE *)open_conf_file(file_name_buf);
+		if(NULL == scan_usr_cfg_fp) {
+			printf("%s: scan_usr_cfg_fp open failed\n", __func__);
+			return;
+		}
+	}
+}
+////////////////////////////////////////////////
+static int scan_cfg_usr_cfg_file_close()
+{
+	if(NULL != scan_usr_cfg_fp) {
+		fclose((FILE *)scan_usr_cfg_fp);
+		scan_usr_cfg_fp = NULL;
+	}
+}
 ///////////////////////////////////////////////////////////////////////////////////////////
 int scan_cfg_file_open( const FILE *sys_cfg_fp,  const FILE *usr_cfg_fp)
 {
@@ -60,6 +84,7 @@ int scan_cfg_file_open( const FILE *sys_cfg_fp,  const FILE *usr_cfg_fp)
         snprintf(file_name_buf, 128, "%s/%s", scan_usr_cfg_path, scan_usr_cfg_file);
         scan_usr_cfg_fp = (FILE *)open_conf_file(file_name_buf);
     }
+
 	if(scan_usr_cfg_fp == NULL)
 	{
 #ifdef SCAN_DEBUG
@@ -78,10 +103,13 @@ int scan_cfg_modem_oper_mode_get()
 	int ret;
 	char buf[BUFSIZE];
 	char rev_buf[64];
+	char file_name_buf[128];
 	int  mode = 0;
+	
+	scan_cfg_usr_cfg_file_open();
 
 	snprintf(buf, BUFSIZE, "scan_oper_mode");
-//	printf("0:%s, buf=%s, scan_usr_cfg_fp=%p\n", __func__, buf, scan_usr_cfg_fp);
+
 	ret = read_conf_value_ext((int ) scan_usr_cfg_fp, buf, rev_buf, CFG_FILE_KEY_SPLIT, CFG_FILE_VALUE_BRACE);
 //	printf("0:%s, buf=%s, scan_usr_cfg_fp=%p\n", __func__, buf, scan_usr_cfg_fp);
 	if(ret > 0) {
@@ -93,6 +121,8 @@ int scan_cfg_modem_oper_mode_get()
 		return RET_FAILED;
 	}
 
+	scan_cfg_usr_cfg_file_close();
+
 	return mode;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -102,6 +132,9 @@ int scan_cfg_modem_auto_operate_flag_get()
 	char buf[BUFSIZE];
 	char rev_buf[64];
 	int  flag = 0;
+	char file_name_buf[128];
+
+	scan_cfg_usr_cfg_file_open();	
 
 	snprintf(buf, BUFSIZE, "scan_oper_auto");
 	ret = read_conf_value_ext((int ) scan_usr_cfg_fp, buf, rev_buf, CFG_FILE_KEY_SPLIT, CFG_FILE_VALUE_BRACE);
@@ -112,6 +145,8 @@ int scan_cfg_modem_auto_operate_flag_get()
 	} else {
 		return RET_FAILED;
 	}
+	
+	scan_cfg_usr_cfg_file_close();
 
 	return flag;
 }

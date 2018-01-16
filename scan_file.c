@@ -30,8 +30,7 @@ static void scan_local_time_get(struct tm *timenow, char *time_buf)
     time(&now);
 
     timenow = localtime(&now);
-    snprintf(time_buf,128,"%d-%d-%02d-%02d-%02d-%d.txt",  1900+timenow->tm_year, timenow->tm_mon+1, timenow->tm_mday,  timenow->tm_hour,timenow->tm_min, 
-         timenow->tm_min/ 30);
+    snprintf(time_buf,128,"%d-%d-%02d-%02d-%02d.txt",  1900+timenow->tm_year, timenow->tm_mon+1, timenow->tm_mday,  timenow->tm_hour,timenow->tm_min);
 }
 
 //longitude : 经度， latitude: 纬度
@@ -71,6 +70,7 @@ void scan_file_info_save(char *info_buf, TModemLocal *pm, int num)
     memset(tmp_buf, 0, MAX_INFO_LEN);
 
     if (NULL == info_file_fp ) {
+        modem_info_num = 0;     //初始化
         memset(file_name_buf, 0, MAX_INFO_LEN);
         scan_file_name_get(file_name_buf);
         info_file_fp = fopen(file_name_buf, "a+");
@@ -81,13 +81,13 @@ void scan_file_info_save(char *info_buf, TModemLocal *pm, int num)
 
          for( i = 0; i < num; i++) {
             if(YUGA == pm->manu_id)
-                snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "Modem %d is YUGA,");
+                snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "Modem %d is YUGA,  ", pm->index);
             else if(HUAWEI == pm->manu_id)
-                snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "Modem %d is HUAWEI,");
+                snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "Modem %d is HUAWEI,  ",pm->index);
             
             pm++;
         }
-        pm = pm - num + 1;
+        pm = pm - i;
 
         snprintf(tmp_buf + strlen(tmp_buf), MAX_INFO_LEN, "\n");
         fputs(tmp_buf,  info_file_fp); 
