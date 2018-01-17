@@ -65,7 +65,7 @@ static int scan_net_recv(int sockfd, SA *pcliaddr, socklen_t clilen)
         Recvfrom(sockfd, mesg, MAXLINE, 0, pcliaddr, &len);
         count++;
         
-        printf("count=%d, mesg=%d\n", count, mesg);
+//        printf("count=%d, mesg=%d\n", count, mesg);
     }
 }
 /////////////////////////////////////////////////////////////////////////////

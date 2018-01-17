@@ -5,11 +5,11 @@
 -%>
 
 <%+header%>
-<h2 name="content"><%: Scanner error/log info%></h2>
+<h2 name="content"><%:Scanner error/log info%></h2>
 <div id="content_syslog">
 <textarea style="font-size: 12px;" readonly="readonly" wrap="off" rows="<%=dmesg:cmatch("\n")+2%>" id="syslog"><%=dmesg:pcdata()%></textarea>
 </div>
-<h2 name="content"><%: Modem  info%></h2>
+<h2 name="content"><%:Modem info/Scanning info%></h2>
 <div id="content_syslog">
 <textarea style="font-size: 12px;" readonly="readonly" wrap="off" rows="<%=dmesg:cmatch("\n")+2%>" id="syslog"><%=dmesg:pcdata()%></textarea>
 </div>

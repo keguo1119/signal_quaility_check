@@ -472,7 +472,9 @@ static int scan_modem_signal_quality_info_get_Y(TModem *ptModem, char *buf, eope
         rssi = -51;
     } else if(0 == rssi) {
         rssi = -113;
-    } else {
+    } else if (99 == rssi){
+        rssi = 0;
+    }else {
         rssi = -113 + 2 * rssi;
     }
 
@@ -760,7 +762,8 @@ void scan_modem_status_check()
         if(0 == pm->isvaild) {
             continue;
         }
-    
+        
+        scan_modem_sim_oper_que(pm);
         scan_modem_net_register_check(pm);
         scan_modem_sim_mode_que(pm);
         oss_delay(50);
@@ -875,9 +878,9 @@ void scan_modem_init()
         }
         
         ret = scan_modem_sim_status_check(&pm->atModem); // 
-        if(ret) {
-            scan_modem_sim_oper_que(pm);  //sim 卡运营商查询
-        }
+        // if(ret) {
+        //     scan_modem_sim_oper_que(pm);  //sim 卡运营商查询
+        // }
 
 
         printf("i =%d, ret=%d, vaild=%d, fd=%d, oper=%d, mode=%d\n",  
