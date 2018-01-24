@@ -1,0 +1,36 @@
+<%#
+Copyright 2008 Steven Barth <steven@midlink.org>
+Copyright 2008-2015 Jo-Philipp Wich <jow@openwrt.org>
+Licensed to the public under the Apache License 2.0.
+-%>
+
+<%+header%>
+
+<h2 name="content"><%:Download 4G info files%></h2>
+
+
+<fieldset class="cbi-section">
+
+       <fieldset class="cbi-section">
+               <legend><%:Dowload%></legend>
+               <div class="cbi-section-descr"><%:Click "Generate archive" to download a tar archive of the current info files.).%></div>
+               <div class="cbi-section-node">
+                       <form class="inline" method="post" action="<%=url('admin/scan/download/action')%>">
+                               <input type="hidden" name="token" value="<%=token%>" />
+                               <div class="cbi-value<% if not reset_avail then %> cbi-value-last<% end %>">
+                                       <label class="cbi-value-title" for="image"><%:Download file%>:</label>
+                                       <div class="cbi-value-field">
+                                               <input class="cbi-button cbi-button-apply" type="submit" name="backup" value="<%:Generate arc
+                                       </div>
+                               </div>
+                       </form>
+               </div>
+               <br />
+       </fieldset>
+
+       <br />
+
+
+</fieldset>
+
+<%+footer%>

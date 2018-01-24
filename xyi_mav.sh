@@ -204,3 +204,7 @@ while true;do
 	fi
 	sleep 20
 done
+
+ifconfig usb0 | grep "inet addr" | awk '{print $2}' | awk 'BEGIN {FS=":"} {print$2}'
+/usr/sbin/ntpd -n -N -S /usr/sbin/ntpd-hotplug -p 0.openwrt.pool.ntp.org -p 1.openwrt.pool.ntp.org -p 2.openwrt.pool.ntp.org
+ date "+%H:%M:%S"

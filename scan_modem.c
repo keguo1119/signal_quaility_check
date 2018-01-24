@@ -19,33 +19,35 @@ static int byte_size = 8;
 static int stop_bit  = 1;
 static int scan_run_flag = 1; 
 
+
+
 pthread_t modem_id; 
 
 TModemLocal pModem[MODEM_NUM]; 
 
 TModemAtCmdStr AtCmdStr[MAX_AT_CMD_NUMS] =  {
     {"AT\r",            "OK", ""}, //AT          = 0,
-    {"ATE%d\r",         "OK", ""}, //ATE1 å¼€å›æ˜¾,ATE0 å…³,
-    {"AT+CGMI\r"          "OK", ""},  //æŸ¥è¯¢å‚å•†;
-    {"AT+CMEE",         "OK", ""}, //AT_CMEE_SET     , =2 ,å½“å‘ç”Ÿé”™è¯¯çš„æ—¶å€™ï¼Œæ˜¾ç¤ºè¯¦ç»†ä¿¡æ¯
-    {"AT+CGREG",        "OK", ""}, ///AT_CGREG_SET   , =2 ,æ‰“å¼€PSåŸŸæ³¨å†ŒçŠ¶æ€å˜åŒ–æ—¶çš„ä¸»åŠ¨ä¸ŠæŠ¥åŠŸ
+    {"ATE%d\r",         "OK", ""}, //ATE1 ¿ª»ØÏÔ,ATE0 ¹Ø,
+    {"AT+CGMI\r"          "OK", ""},  //²éÑ¯³§ÉÌ;
+    {"AT+CMEE",         "OK", ""}, //AT_CMEE_SET     , =2 ,µ±·¢Éú´íÎóµÄÊ±ºò£¬ÏÔÊ¾ÏêÏ¸ĞÅÏ¢
+    {"AT+CGREG",        "OK", ""}, ///AT_CGREG_SET   , =2 ,´ò¿ªPSÓò×¢²á×´Ì¬±ä»¯Ê±µÄÖ÷¶¯ÉÏ±¨¹¦
    
-    {"AT+CPIN?\r",      "OK", ""}, //AT_CPIN_QUE     , æŸ¥è¯¢æ˜¯å¦å¯ä»¥è¯†åˆ«SIMå¡
-    {"AT+CGREG?\r",     "OK", ""}, ///AT_CGREG_QUE   , æŸ¥è¯¢æ˜¯å¦æ³¨å†Œäº†ç½‘ç»œï¼Œ
-    {"AT^CURC",         "OK", ""}, //AT_CURC_SET_H    , =0 å…³é—­éƒ¨åˆ†ä¸»åŠ¨ä¸ŠæŠ¥ï¼Œæ¯”å¦‚ä¿¡å·å¼ºåº¦çš„ä¸ŠæŠ¥
-    {"AT^STSF",         "OK", ""}, //AT_STSF_SET_H     , =0 å…³é—­STKçš„ä¸»åŠ¨ä¸ŠæŠ¥ 
-    {"AT+CMER",      "OK", ""}, //AT_CMER_SET_Y é—œé–‰ä¸»å‹•ä¸Šå ±, 1,0,0,1æ‰“é–‹ï¼Œ0,0,0,0 é—œé–‰
+    {"AT+CPIN?\r",      "OK", ""}, //AT_CPIN_QUE     , ²éÑ¯ÊÇ·ñ¿ÉÒÔÊ¶±ğSIM¿¨
+    {"AT+CGREG?\r",     "OK", ""}, ///AT_CGREG_QUE   , ²éÑ¯ÊÇ·ñ×¢²áÁËÍøÂç£¬
+    {"AT^CURC",         "OK", ""}, //AT_CURC_SET_H    , =0 ¹Ø±Õ²¿·ÖÖ÷¶¯ÉÏ±¨£¬±ÈÈçĞÅºÅÇ¿¶ÈµÄÉÏ±¨
+    {"AT^STSF",         "OK", ""}, //AT_STSF_SET_H     , =0 ¹Ø±ÕSTKµÄÖ÷¶¯ÉÏ±¨ 
+    {"AT+CMER",      "OK", ""}, //AT_CMER_SET_Y êPé]Ö÷„ÓÉÏˆó, 1,0,0,1´òé_£¬0,0,0,0 êPé]
    
-    {"ATS0",            "OK", ""}, //ATS_SET_H         , =0 å…³é—­è‡ªåŠ¨æ¥å¬
-    {"AT^NVAUTO",       "OK", ""}, //ATS_NVAUTO_SET_Y         , =0 å…³é—­è‡ªåŠ¨æ¥å¬
-    {"AT^HCSQ?\r",      "OK", ""}, //AT_HCSQ_QUE_H, åä¸ºæŸ¥è¯¢ä¿¡å·è´¨é‡ï¼Œ
-    {"AT+CCSQ\r",       "OK", ""}, //AT_CCSQ_QUE_Y, YUGAæŸ¥è¯¢ä¿¡å·è´¨é‡  
-    {"AT+COPS?\r",      "OK", ""},  //è¿è¡Œå•†åˆ¶å¼æŸ¥è¯¢
+    {"ATS0",            "OK", ""}, //ATS_SET_H         , =0 ¹Ø±Õ×Ô¶¯½ÓÌı
+    {"AT^NVAUTO",       "OK", ""}, //ATS_NVAUTO_SET_Y         , =0 ¹Ø±Õ×Ô¶¯½ÓÌı
+    {"AT^HCSQ?\r",      "OK", ""}, //AT_HCSQ_QUE_H, »ªÎª²éÑ¯ĞÅºÅÖÊÁ¿£¬
+    {"AT+CCSQ\r",       "OK", ""}, //AT_CCSQ_QUE_Y, YUGA²éÑ¯ĞÅºÅÖÊÁ¿  
+    {"AT+COPS?\r",      "OK", ""},  //ÔËĞĞÉÌÖÆÊ½²éÑ¯
    
-    {"AT^MODECONFIG",   "OK", ""},  //YUGA æ¨¡å¼é€‰æ‹©  2 è‡ªåŠ¨ï¼Œ 9 CDMA, 13 GSM, 38 LTE only, 14 WCDMA only, 15 TD-SCDMA only 
+    {"AT^MODECONFIG",   "OK", ""},  //YUGA Ä£Ê½Ñ¡Ôñ  2 ×Ô¶¯£¬ 9 CDMA, 13 GSM, 38 LTE only, 14 WCDMA only, 15 TD-SCDMA only 
     {"AT^NDISDUP=?\r",  "OK", ""}, //AT_NDISDUP_QUE  ,
-    {"AT^NDISDUP=1,",   "OK", ""}, //HUAWEI,AT_NDISDUP_SET, 0 æ–­å¼€ç½‘ç»œè¿æ¥ï¼Œ1è¿ä¸Šç½‘ç»œ   
-    {"AT$QCRMCALL",     "OK", ""}, //YUGA, AT_QCRMCALL_SET_H, 0 æ–­å¼€ç½‘ç»œè¿æ¥ï¼Œ1è¿ä¸Šç½‘ç»œ 
+    {"AT^NDISDUP=1,",   "OK", ""}, //HUAWEI,AT_NDISDUP_SET, 0 ¶Ï¿ªÍøÂçÁ¬½Ó£¬1Á¬ÉÏÍøÂç   
+    {"AT$QCRMCALL",     "OK", ""}, //YUGA, AT_QCRMCALL_SET_H, 0 ¶Ï¿ªÍøÂçÁ¬½Ó£¬1Á¬ÉÏÍøÂç 
 };
 
 ////////////////////////////////////////////////////////
@@ -75,7 +77,7 @@ static int scan_modem_manu_que(TModemLocal *pm)
 
 }
 /////////////////////////////////////////////////////////////////////////
-//AT_CURC_SET_H    , =0 å…³é—­éƒ¨åˆ†ä¸»åŠ¨ä¸ŠæŠ¥ï¼Œæ¯”å¦‚ä¿¡å·å¼ºåº¦çš„ä¸ŠæŠ¥ HUAWEI
+//AT_CURC_SET_H    , =0 ¹Ø±Õ²¿·ÖÖ÷¶¯ÉÏ±¨£¬±ÈÈçĞÅºÅÇ¿¶ÈµÄÉÏ±¨ HUAWEI
 static int scan_modem_curc_set(TModem *ptModem, int mode)
 {
     int ret;
@@ -95,7 +97,7 @@ static int scan_modem_curc_set(TModem *ptModem, int mode)
 	return RET_OK;
 }
 ////////////////////////////////////////////////////////
-//AT_STSF_SET_H    , =0 å…³é—­STKçš„ä¸»åŠ¨ä¸ŠæŠ¥ HUAWEI
+//AT_STSF_SET_H    , =0 ¹Ø±ÕSTKµÄÖ÷¶¯ÉÏ±¨ HUAWEI
 static int scan_modem_stsf_set(TModem *ptModem, int mode)
 {
     int ret;
@@ -115,7 +117,7 @@ static int scan_modem_stsf_set(TModem *ptModem, int mode)
 	return RET_OK;
 }
 ////////////////////////////////////////////////////////
-//ATS_SET_H    , å…³é—­è‡ªåŠ¨æ¥å¬,  HUAWEI
+//ATS_SET_H    , ¹Ø±Õ×Ô¶¯½ÓÌı,  HUAWEI
 static int scan_modem_ats_set(TModem *ptModem, int mode)
 {
     int ret;
@@ -137,16 +139,16 @@ static int scan_modem_ats_set(TModem *ptModem, int mode)
 
 ////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
-//AT_CMER_SET_Y    , =0 å…³é—­cmerçš„ä¸»åŠ¨ä¸ŠæŠ¥ YUGA
+//AT_CMER_SET_Y    , =0 ¹Ø±ÕcmerµÄÖ÷¶¯ÉÏ±¨ YUGA
 static int scan_modem_cmer_set(TModem *ptModem, int mode)
 {
     int ret;
     char cmd_buf[128];
 
     if(!mode)
-        snprintf(cmd_buf, 128, "%s=%s\r", AtCmdStr[AT_CMER_SET_Y].atCmd, "0,0,0,0"); //å…³
+        snprintf(cmd_buf, 128, "%s=%s\r", AtCmdStr[AT_CMER_SET_Y].atCmd, "0,0,0,0"); //¹Ø
     else 
-        snprintf(cmd_buf, 128, "%s=%s\r", AtCmdStr[AT_CMER_SET_Y].atCmd, "1,0,0,1"); //å¼€
+        snprintf(cmd_buf, 128, "%s=%s\r", AtCmdStr[AT_CMER_SET_Y].atCmd, "1,0,0,1"); //¿ª
 
     ret = modem_atCmd_w_r(ptModem, cmd_buf, AtCmdStr[AT_CMER_SET_Y].atCmdOkResp, NULL);
     if(ret != RET_OK)
@@ -160,7 +162,7 @@ static int scan_modem_cmer_set(TModem *ptModem, int mode)
 	return RET_OK;
 }
 ////////////////////////////////////////////////////////
-//ATS_NVAUTO_SET_Y    , å…³é—­è‡ªåŠ¨æ¥å¬,  YUGA
+//ATS_NVAUTO_SET_Y    , ¹Ø±Õ×Ô¶¯½ÓÌı,  YUGA
 static int scan_modem_nvauto_set(TModem *ptModem, int mode)
 {
     int ret;
@@ -208,7 +210,7 @@ static int scan_modem_sim_status_check(TModem *ptModem)
 }
 ////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
-// AT+CGREG?  =?,1(5) è¡¨ç¤ºæ³¨å†Œä¸Šç½‘ç»œ
+// AT+CGREG?  =?,1(5) ±íÊ¾×¢²áÉÏÍøÂç
 static int scan_modem_net_register_check(TModemLocal *pm )
 {
     char *pData,*pEnd;
@@ -248,7 +250,7 @@ static int scan_modem_net_register_check(TModemLocal *pm )
 	return RET_OK;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
-// sim å¡è¿è¥å•†æŸ¥è¯¢
+// sim ¿¨ÔËÓªÉÌ²éÑ¯
 static int scan_modem_sim_oper_que(TModemLocal *pm)
 {
     char *pData,*pEnd;
@@ -277,7 +279,7 @@ static int scan_modem_sim_oper_que(TModemLocal *pm)
     return RET_OK;
 }
 /////////////////////////////////////////////////////////////////////////////
-// 3G/4G mode æŸ¥è¯¢ï¼Œ HUAWEI
+// 3G/4G mode ²éÑ¯£¬ HUAWEI
 static estand_mode scan_modem_sim_mode_que_H(TModemLocal *pm)
 {
     char *pData,*pEnd;
@@ -312,7 +314,7 @@ static estand_mode scan_modem_sim_mode_que_H(TModemLocal *pm)
     return pm->mode;
 }
 /////////////////////////////////////////////////////////////////////////////
-// 3G/4G mode æŸ¥è¯¢ï¼Œ YUGA
+// 3G/4G mode ²éÑ¯£¬ YUGA
 static estand_mode scan_modem_sim_mode_que_Y(TModemLocal *pm)
 {
     int  i, ret;
@@ -371,7 +373,7 @@ static estand_mode scan_modem_sim_mode_que_Y(TModemLocal *pm)
        
 }
 /////////////////////////////////////////////////////////////////////////////////////////
-/////////HUAWEI ä¿¡å·è´¨é‡è·å–
+/////////HUAWEI ĞÅºÅÖÊÁ¿»ñÈ¡
 static int scan_modem_signal_quality_info_get_H(TModem *ptModem, char *buf, eoper_mode mode)
 {
     char *pData,*pEnd;
@@ -436,7 +438,7 @@ static int scan_modem_signal_quality_info_get_H(TModem *ptModem, char *buf, eope
 
 }
 //////////////////////////////////////////////////////////////////////////////////////
-////YUGA ä¿¡å·è´¨é‡è·å–
+////YUGA ĞÅºÅÖÊÁ¿»ñÈ¡
 static int scan_modem_signal_quality_info_get_Y(TModem *ptModem, char *buf, eoper_mode mode)
 {
     char *pData,*pEnd;
@@ -482,7 +484,7 @@ static int scan_modem_signal_quality_info_get_Y(TModem *ptModem, char *buf, eope
 }
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
-//å°†æ¨¡å—ç”±3G æ”¹ä¸º4Gæˆ–è€…4G æ”¹ä¸º3G, mode=0 è®¾ç½®ä¸º4G,1ä¸º3G HUAWEI
+//½«Ä£¿éÓÉ3G ¸ÄÎª4G»òÕß4G ¸ÄÎª3G, mode=0 ÉèÖÃÎª4G,1Îª3G HUAWEI
 static int scan_modem_mode_change_H(int mode)
 {
     char cmd[128];
@@ -543,7 +545,7 @@ static int scan_modem_mode_change_H(int mode)
     return count;
 }
 /////////////////////////////////////////////////////////////////////////////
-//å°†æ¨¡å—ç”±3G æ”¹ä¸º4Gæˆ–è€…4G æ”¹ä¸º3G, mode=0 è®¾ç½®ä¸º4G,1ä¸º3G YUGA
+//½«Ä£¿éÓÉ3G ¸ÄÎª4G»òÕß4G ¸ÄÎª3G, mode=0 ÉèÖÃÎª4G,1Îª3G YUGA
 static int scan_modem_mode_change_Y(int mode)
 {
     char cmd[128];
@@ -617,7 +619,7 @@ static int scan_modem_mode_change_Y(int mode)
     return count;
 }
 /////////////////////////////////////////////////////////////////////////////
-//åä¸ºæ‹¨å·, flag = 1, connecting, flag = 0, disconnect
+//»ªÎª²¦ºÅ, flag = 1, connecting, flag = 0, disconnect
 static int scan_modem_connet_net_H(TModemLocal *pm, int flag)
 {
      char cmd[128];
@@ -749,7 +751,7 @@ int scan_modem_connet_net(TModemLocal *pm, int conn_flag)
 
 }
 /////////////////////////////////////////////////////////////////////////////
-//æŸ¥æ‰¾ç½‘ç»œè¿™æ¬¡æƒ…å†µ
+//²éÕÒÍøÂçÕâ´ÎÇé¿ö
 void scan_modem_status_check()
 {
     int i;
@@ -771,9 +773,14 @@ void scan_modem_status_check()
     oss_delay(5000);
 }
 ////////////////////////////////////////////////////////////////////////////
-void scan_modem_run_flag_set(int flag)
+void scan_modem_run_start()
 {
-    scan_run_flag = flag;
+    scan_run_flag = 1;
+}
+////////////////////////////////////////////////////////////////////////////
+void scan_modem_run_stop()
+{
+    scan_run_flag = 0;
 }
 /////////////////////////////////////////////////////////////////////////////
 static void *scan_modem_run_pthread()
@@ -865,13 +872,13 @@ void scan_modem_init()
             continue;
         }
 
-        scan_modem_manu_que(pm); //å‚å®¶æŸ¥è¯¢
+        scan_modem_manu_que(pm); //³§¼Ò²éÑ¯
         modem_error_mode(&pm->atModem, 2);
 
         if(HUAWEI == pm->manu_id) {
-            scan_modem_curc_set(&pm->atModem, 0); //AT_CURC_SET_H    , =0 å…³é—­éƒ¨åˆ†ä¸»åŠ¨ä¸ŠæŠ¥ï¼Œæ¯”å¦‚ä¿¡å·å¼ºåº¦çš„ä¸ŠæŠ¥
-            scan_modem_stsf_set(&pm->atModem, 0); //AT_STSF_SET_H, =0 å…³é—­STKçš„ä¸»åŠ¨ä¸ŠæŠ¥
-            scan_modem_ats_set(&pm->atModem, 0);  //ATS_SET_H    , å…³é—­è‡ªåŠ¨æ¥å¬ 
+            scan_modem_curc_set(&pm->atModem, 0); //AT_CURC_SET_H    , =0 ¹Ø±Õ²¿·ÖÖ÷¶¯ÉÏ±¨£¬±ÈÈçĞÅºÅÇ¿¶ÈµÄÉÏ±¨
+            scan_modem_stsf_set(&pm->atModem, 0); //AT_STSF_SET_H, =0 ¹Ø±ÕSTKµÄÖ÷¶¯ÉÏ±¨
+            scan_modem_ats_set(&pm->atModem, 0);  //ATS_SET_H    , ¹Ø±Õ×Ô¶¯½ÓÌı 
         } else if (YUGA == pm->manu_id) {
                 scan_modem_cmer_set(&pm->atModem, 0);
                 scan_modem_nvauto_set(&pm->atModem, 0);
@@ -879,7 +886,7 @@ void scan_modem_init()
         
         ret = scan_modem_sim_status_check(&pm->atModem); // 
         // if(ret) {
-        //     scan_modem_sim_oper_que(pm);  //sim å¡è¿è¥å•†æŸ¥è¯¢
+        //     scan_modem_sim_oper_que(pm);  //sim ¿¨ÔËÓªÉÌ²éÑ¯
         // }
 
 

@@ -1,13 +1,16 @@
-#include "oss.h"
-#include "scan_net.h"
+
 //#include "scan_file.h"
 //#include "scan_modem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "unp.h"
-#include "main.h"
 #include <sys/types.h>
 #include <ifaddrs.h>
+
+#include "oss.h"
+#include "scan_net.h"
+#include "scan_logic_control.h"
+#include "main.h"
 
 static int count = 0;
 int   sockfd;
@@ -69,39 +72,38 @@ static int scan_net_recv(int sockfd, SA *pcliaddr, socklen_t clilen)
     }
 }
 /////////////////////////////////////////////////////////////////////////////
-/*
-static int scan_net_send(int sockfd, struct sockaddr_in *pcliaddr, socklen_t clien)
-{
-    int n;
-    socklen_t len;
-    char mesg[1024];
-
-    while(1) {
-        len = clien;
-        n = recvfrom(sockfd, mesg, 1024, pcliaddr, &len);
-        if(n > 0) {
-            printf("mesg=%d\n", mesg);
-        }
-    }
-}
-*/
-/////////////////////////////////////////////////////////////////////////////
 static void *scan_net_run_pthread()
 {
     socklen_t       len;
     char            mesg[MAXLINE];
     gps_raw_t       *cur_gps;
 
+    unsigned char   uav_status;
+    unsigned char   main_status;
+    unsigned int    time_std_s;
+
+
     while(1) {
 
         Recvfrom(sockfd, mesg, MAXLINE, 0, (SA *)&cliaddr, &len);
-        cur_gps = (gps_raw_t *)mesg;
+        time_std_s = *(unsigned int *)&mesg[0];
+        main_status = mesg[4];
+        uav_status  = mesg[5];
+
+        cur_gps = (gps_raw_t *)&mesg[6];
         count++;
         net_gps_lat = cur_gps->lat_gps;
         net_gps_lon = cur_gps->lon_gps;
-        printf("count=%d, lon=%d, lat=%d\n", count, cur_gps->lat_gps, cur_gps->lon_gps);
+
+        scan_logic_uav_status_set(uav_status);
+        scan_logic_main_status_set(main_status);
+        scan_logic_time_std_set(time_std_s);
+
+        printf("count=%d, time_std_s=%d, main_status=%d ,uav_status=%d, lon=%d, lat=%d\n", \
+             count,time_std_s, main_status, uav_status, cur_gps->lat_gps, cur_gps->lon_gps);
     }
 }
+
 /////////////////////////////////////////////////////////////////////////
 int scan_net_gps_info_get(float *lat, float *lon)
 {

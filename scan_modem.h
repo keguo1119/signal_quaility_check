@@ -24,30 +24,30 @@ typedef enum Emanu_id {
     YUGA    = 1
 }emanu_id;
 
-//_H 代表华为命令，_Y代表 YUGA
+//_H ������Ϊ���_Y���� YUGA
 typedef enum at_cmd_index {
     AT          = 0,
     ATE_SET     = 1,
-    AT_CGMI_QUE     , //查询厂商;
-    AT_CMEE_SET     , //=2 ,当发生错误的时候，显示详细信息
-    AT_CGREG_SET    , //=2 ,打开PS域注册状态变化时的主动上报功
+    AT_CGMI_QUE     , //��ѯ����;
+    AT_CMEE_SET     , //=2 ,�����������ʱ����ʾ��ϸ��Ϣ
+    AT_CGREG_SET    , //=2 ,��PS��ע��״̬�仯ʱ�������ϱ���
     
-    AT_CPIN_QUE     , //查询是否可以识别SIM卡
-    AT_CGREG_QUE    , //查询是否注册了本地网络；
-    AT_CURC_SET_H     , //关闭部分主动上报，比如信号强度的上报
-    AT_STSF_SET_H   , //关闭STK的主动上报  
-    AT_CMER_SET_Y   , //關閉主動上報
+    AT_CPIN_QUE     , //��ѯ�Ƿ����ʶ��SIM��
+    AT_CGREG_QUE    , //��ѯ�Ƿ�ע���˱������磻
+    AT_CURC_SET_H     , //�رղ��������ϱ��������ź�ǿ�ȵ��ϱ�
+    AT_STSF_SET_H   , //�ر�STK�������ϱ�  
+    AT_CMER_SET_Y   , //�P�]�����ψ�
     
-    ATS_SET_H       , //关闭自动接听
-    ATS_NVAUTO_SET_Y , //关闭自动接听
-    AT_HCSQ_QUE_H   , // 华为查询信号质量，运营商制式查询
-    AT_CCSQ_QUE_Y   , // YUGA查询信号质量
-    AT_COPS_QUE     ,  //运行商查询
+    ATS_SET_H       , //�ر��Զ�����
+    ATS_NVAUTO_SET_Y , //�ر��Զ�����
+    AT_HCSQ_QUE_H   , // ��Ϊ��ѯ�ź���������Ӫ����ʽ��ѯ
+    AT_CCSQ_QUE_Y   , // YUGA��ѯ�ź�����
+    AT_COPS_QUE     ,  //�����̲�ѯ
    
-    AT_MODECONFIG_SET_Y, //运行商模式设置，运营商模式查询
+    AT_MODECONFIG_SET_Y, //������ģʽ���ã���Ӫ��ģʽ��ѯ
     AT_NDISDUP_QUE  ,
-    AT_NDISDUP_SET_H,     //华为模块拨号
-    AT_QCRMCALL_SET_H     //域格模块拨号  
+    AT_NDISDUP_SET_H,     //��Ϊģ�鲦��
+    AT_QCRMCALL_SET_H     //���ģ�鲦��  
 }e_at_cmd;
 
 typedef struct TagModemLocal{
@@ -56,7 +56,7 @@ typedef struct TagModemLocal{
     int index;
     int regis_ok;
     emanu_id  manu_id;
-    eoper_mode oper;  //1 CM 移动，2 CN 联通 , 3 CT 电信
+    eoper_mode oper;  //1 CM �ƶ���2 CN ��ͨ , 3 CT ����
     estand_mode mode;
     TModem atModem;
 }TModemLocal;
@@ -66,6 +66,8 @@ void scan_modem_init();
 void scan_modem_run();
 void scan_modem_status_check();
 int  scan_modem_mode_change(int mode);
-void scan_modem_run_flag_set(int flag);
+
+void scan_modem_run_start();
+void scan_modem_run_stop();
 
 #endif

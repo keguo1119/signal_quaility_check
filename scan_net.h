@@ -22,4 +22,6 @@ typedef struct
 int scan_net_init();
 void scan_net_run();
 int scan_net_gps_info_get(float *lat, float *lon);
+
+
 #endif
