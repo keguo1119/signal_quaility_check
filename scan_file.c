@@ -15,16 +15,18 @@ char *file_path         = "./file/";
 char *back_file_path    = "./back_file/";
 
 char *err_info_file_name = "err_info.txt";
-
+char *log_info_file_name = "log.txt";
 static char *file_head_name = "4G_signal_scan";
 
 static FILE *info_file_fp = NULL;
 static FILE *err_info_file_fp = NULL;
+static FILE *log_info_file_fp = NULL;
 
 static int modem_info_num = 0;
 //////////////////////////////////////////////////////////////////
-static void scan_local_time_get(struct tm *timenow, char *time_buf)
+static void scan_local_time_get(char *time_buf)
 {
+    struct tm *timenow;
     time_t now;
     
     time(&now);
@@ -33,7 +35,7 @@ static void scan_local_time_get(struct tm *timenow, char *time_buf)
     snprintf(time_buf,128,"%d-%d-%02d-%02d-%02d.txt",  1900+timenow->tm_year, timenow->tm_mon+1, timenow->tm_mday,  timenow->tm_hour,timenow->tm_min);
 }
 
-//longitude : ç»åº¦ï¼Œ latitude: çº¬åº¦
+//longitude : ç»åº¦ï¼? latitude: çº?º¦
 static void scan_gps_info_get(float *lon , float *lat)
 {
     *lon = 119.4324;
@@ -44,10 +46,9 @@ static void scan_gps_info_get(float *lon , float *lat)
 ///////////////////////////////////////////////////////////////////
 static void scan_file_name_get(char *name_buf)
 {
-    struct tm timenow;
     char time_buf[MAX_INFO_LEN];
 
-    scan_local_time_get(&timenow, time_buf);
+    scan_local_time_get(time_buf);
 
     snprintf(name_buf,MAX_INFO_LEN, "%s%s-%s", file_path, file_head_name, time_buf);
 }
@@ -70,7 +71,7 @@ void scan_file_info_save(char *info_buf, TModemLocal *pm, int num)
     memset(tmp_buf, 0, MAX_INFO_LEN);
 
     if (NULL == info_file_fp ) {
-        modem_info_num = 0;     //åˆå§‹åŒ–
+        modem_info_num = 0;     //åˆå?åŒ?
         memset(file_name_buf, 0, MAX_INFO_LEN);
         scan_file_name_get(file_name_buf);
         info_file_fp = fopen(file_name_buf, "a+");
@@ -144,7 +145,7 @@ void scan_file_info_save(char *info_buf, TModemLocal *pm, int num)
 //    scan_gps_info_get(&lon_t, &lat_t);
     scan_logic_gps_get(&lat_t, &lon_t);
     snprintf(tmp_buf, MAX_INFO_LEN,"%d,%s%f,%f\n" ,modem_info_num, info_buf, lat_t, lon_t);
-
+    
     fputs(tmp_buf,  info_file_fp); 
     fflush(info_file_fp);
 }
@@ -164,6 +165,25 @@ void scan_file_error_info_save(char *err_buf)
     fflush(err_info_file_fp);
 }
 
+void scan_file_log_info_save(char *log_buf)
+{
+    char name_buf[128];
+    char time_buf[128];
+
+    if (NULL == log_info_file_fp ) {
+        scan_local_time_get(time_buf);
+        snprintf(name_buf, 128, "log/log-%s", time_buf);
+        log_info_file_fp = fopen(name_buf, "w+");
+        if(NULL == log_info_file_fp) {
+            printf("created  log_info_file_fp file failed\n");
+            return ;
+        }
+    }
+
+    fputs(log_buf,  log_info_file_fp); 
+
+    fflush(log_info_file_fp);
+}
 
 /*
     if(!ptModem->isvaild)

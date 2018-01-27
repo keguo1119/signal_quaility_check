@@ -77,6 +77,7 @@ static void *scan_net_run_pthread()
     socklen_t       len;
     char            mesg[MAXLINE];
     gps_raw_t       *cur_gps;
+    char info_buf[128];
 
     unsigned char   uav_status;
     unsigned char   main_status;
@@ -98,9 +99,14 @@ static void *scan_net_run_pthread()
         scan_logic_uav_status_set(uav_status);
         scan_logic_main_status_set(main_status);
         scan_logic_time_std_set(time_std_s);
+        scan_logic_gps_write_to_file(net_gps_lat, net_gps_lon);
 
-        printf("count=%d, time_std_s=%d, main_status=%d ,uav_status=%d, lon=%d, lat=%d\n", \
-             count,time_std_s, main_status, uav_status, cur_gps->lat_gps, cur_gps->lon_gps);
+        snprintf(info_buf, 128, "log-info: count=%d, time_std_s=%d, main_status=%d ,uav_status=%d, lon=%d, lat=%d\n", \
+              count,time_std_s, main_status, uav_status, cur_gps->lat_gps, cur_gps->lon_gps);
+        
+        scan_file_log_info_save(info_buf);
+        memset(info_buf, 0, 128);
+    
     }
 }
 
@@ -130,7 +136,7 @@ int scan_net_init()
     bzero(&servaddr, sizeof(servaddr));
     servaddr.sin_family      = AF_INET;
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port        = htons(SERV_PORT + 3);
+    servaddr.sin_port        = htons(SERV_PORT + 3); //9880
 
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 

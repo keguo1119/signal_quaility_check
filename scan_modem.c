@@ -17,9 +17,7 @@ static int baud_rate = 115200;
 static int parity    = 0;
 static int byte_size = 8;
 static int stop_bit  = 1;
-static int scan_run_flag = 1; 
-
-
+static int scan_run_flag = 0; 
 
 pthread_t modem_id; 
 

@@ -141,9 +141,8 @@ int scan_cfg_modem_auto_operate_flag_get()
 	if(ret > 0) {
 		sscanf(rev_buf, "%d", &flag);
 //		printf("%s, rev_buf=%s, flag=%d\n", __func__, rev_buf, flag);
-
 	} else {
-		return RET_FAILED;
+		return 0;
 	}
 	
 	scan_cfg_usr_cfg_file_close();

@@ -6,9 +6,9 @@
 
 prefix="[ "`basename $0`" ]"
 
-# ç¡®ä¿æ­¤è„šæœ¬ä¸ºäº’æ–¥è¿è¡Œ
+# È·±£´Ë½Å±¾Îª»¥³âÔËÐÐ
 lock="/var/lock/xyi_mav.lock"
-if [ -s $lock ];then	# æ–‡ä»¶å­˜åœ¨ä¸”éžç©º
+if [ -s $lock ];then	# ÎÄ¼þ´æÔÚÇÒ·Ç¿Õ
 	pid_record=`cat ${lock}`
 	# echo $pid_record
 	if_true_lock=`ps aux | grep "$pid_record" | grep "xyi_mav.sh"`
@@ -20,10 +20,10 @@ if [ -s $lock ];then	# æ–‡ä»¶å­˜åœ¨ä¸”éžç©º
 	fi
 fi	
 
-echo $$ > $lock 	# å°†è‡ªèº«PIDå†™å…¥.lockæ–‡ä»¶
+echo $$ > $lock 	# ½«×ÔÉíPIDÐ´Èë.lockÎÄ¼þ
 echo "${prefix} xyi_mav script is running..."
 
-# èŽ·å–å®‰è£…è·¯å¾„ä¿¡æ¯
+# »ñÈ¡°²×°Â·¾¶ÐÅÏ¢
 install_info="/etc/xyi/install.info"
 if [ -f $install_info ];then
 	xyi_installation_path=`cat ${install_info} | grep "INSTALLATION_PATH" | awk -F '=' '{print $2}'`
@@ -51,13 +51,13 @@ function to_path()
 
 xyi_installation_path=$(to_path $xyi_installation_path)
 
-# ç”Ÿæˆç›¸åº”ç›®å½•
+# Éú³ÉÏàÓ¦Ä¿Â¼
 log_path="${xyi_installation_path}log/"
 cache_path="${xyi_installation_path}cache/"
 tmp_path="${xyi_installation_path}tmp/"
 config_path="${xyi_installation_path}config/"
 
-install -d $log_path				# ç¡®è®¤åˆ›å»ºç›¸åº”ç›®å½•
+install -d $log_path				# È·ÈÏ´´½¨ÏàÓ¦Ä¿Â¼
 install -d $cache_path
 install -d $tmp_path
 install -d $config_path
@@ -69,7 +69,7 @@ if [[ $if_empty -ne 0 && "$tmp_files" != "/" && -z "`echo $tmp_files | grep "//"
 	rm -r $tmp_files
 fi
 
-# å°†å¯åŠ¨ä¿¡æ¯(æ—¶é—´ç­‰)å†™å…¥${log_path}startup/startup.log
+# ½«Æô¶¯ÐÅÏ¢(Ê±¼äµÈ)Ð´Èë${log_path}startup/startup.log
 startup_log_path="${log_path}startup/"
 install -d $startup_log_path
 startup_log="${startup_log_path}startup.log"
@@ -99,7 +99,7 @@ install -d $log_directory
 echo "${prefix} log: ${log_directory}"
 
 
-# å¯åŠ¨å„ä¸ªæ¨¡å—
+# Æô¶¯¸÷¸öÄ£¿é
 bin_path="${xyi_installation_path}bin/"
 
 shutdown_path="${bin_path}shutdown/"
@@ -118,7 +118,7 @@ auto_copy_script="${auto_copy_path}auto-copy"
 auto_copy_out="${log_directory}auto_copy.out"
 echo "${prefix} ${auto_copy_script}"
 chmod 755 $auto_copy_script
-sed -i 's/\r//' $auto_copy_script										# åŽ»é™¤\r
+sed -i 's/\r//' $auto_copy_script										# È¥³ý\r
 $auto_copy_script > $auto_copy_out 2>&1 &
 
 cache_cleanup_path="${bin_path}startup/"
@@ -188,9 +188,9 @@ done
 
 function Terminate_Process(){
 	pid=`ps aux | grep $1 | grep -v grep | sed -n 1p | awk '{print $2}'`
-	if [ -n "$pid" ];then	# éžç©º
+	if [ -n "$pid" ];then	# ·Ç¿Õ
 		expr $pid + 0 &>/dev/null
-		if [ $? -eq 0 ];then		# æ˜¯æ•´æ•°
+		if [ $? -eq 0 ];then		# ÊÇÕûÊý
 			kill -9 $pid
 		fi
 	fi
@@ -205,6 +205,25 @@ while true;do
 	sleep 20
 done
 
-ifconfig usb0 | grep "inet addr" | awk '{print $2}' | awk 'BEGIN {FS=":"} {print$2}'
+for i in $(seq 1 3)
+do
+	ifconfig usb$i | grep "inet addr" | awk '{print $2}' | awk 'BEGIN {FS=":"} {print$2}'
+done
 /usr/sbin/ntpd -n -N -S /usr/sbin/ntpd-hotplug -p 0.openwrt.pool.ntp.org -p 1.openwrt.pool.ntp.org -p 2.openwrt.pool.ntp.org
  date "+%H:%M:%S"
+
+
+#run.sh
+#!/bin/sh
+
+for i in $(seq 0 2)
+do
+        ipaddr=$(ifconfig usb$i | grep "inet addr" | awk '{print $2}' | awk 'BEGIN {FS=":"} {print$2}')
+        echo $ipaddr
+
+        date +"%Y-%m-%d %H:%M:%S" > /root/scanner/iperf/iperf_usb"$i"_info.txt
+        iperf -u -c 120.27.136.251 -i 1 -b 2M -t 86400 -B $ipaddr >> /root/scanner/iperf/iperf_usb"$i"_info.txt  2>&1 & 
+done
+
+
+# kill $(ps | grep iperf | grep -v grep | awk '{print $1}')

@@ -44,5 +44,5 @@ void scan_logic_main_status_set(unsigned char status);
 unsigned char scan_logic_main_status_get(void );
 void scan_logic_time_std_set(unsigned int time_std);
 unsigned int scan_logic_time_std_get(void );
-
+void scan_logic_gps_write_to_file(int lat, int lon);
 #endif
