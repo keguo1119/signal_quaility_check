@@ -1,0 +1,17 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+
+rmmod qmi_wwan.ko
+insmod GobiNet.ko
+
+echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+
+
+/root/./start.sh &
+/root/scanner/./clear.sh
+
+cd /root/scanner/ && ./scanner_2p &
+
+rm /root/scanner/err_info.txt
+
+exit 0

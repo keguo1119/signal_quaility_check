@@ -17,8 +17,10 @@ end
 function action_debug()
         os.execute("cat $(ls ~/scanner/file/4G_signal_scan*  -tl | awk '{print $9}' | head -n 1) | head -n 2  > ~/scanner/file/signal_info.txt")
         os.execute("cat $(ls ~/scanner/file/4G_signal_scan*  -tl | awk '{print $9}' | head -n 1) | tail   >> ~/scanner/file/signal_info.txt")
+        os.execute("cat /root/scanner/err_info.txt > /tmp/scanner_log_err_info.txt")
+        os.execute("cat $(ls /root/scanner/log/log-* -tl | awk '{print $9}' | head -n 1) | tail -n 5 >> /tmp/scanner_log_err_info.txt")
 
-        local dmesg     = luci.util.exec("cat /root/scanner/err_info.txt")
+        local dmesg     = luci.util.exec("cat /tmp/scanner_log_err_info.txt")
         local scan_info = luci.util.exec("cat /root/scanner/file/signal_info.txt")
         luci.template.render("admin_scan/dmesg", {dmesg=dmesg, scan_info=scan_info})
 end

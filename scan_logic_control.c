@@ -22,22 +22,34 @@ static unsigned char g_main_status = 0; // ?????????????
 static unsigned int  g_time_std_s  = 0; 
 
 static unsigned char g_last_uav_status = 0;
-
+static unsigned char file_name_tail[128];
 ///////////////////////////////////////////////////////
 void scan_logic_gps_get(float *lat, float *lon)
 {
     scan_net_gps_info_get(lat, lon);
 }
 
+void scan_logic_gps_info_file_name_tail()
+{
+     scan_local_time_get(file_name_tail);
+}
+
+
 void scan_logic_gps_write_to_file(int lat, int lon)
 {
-    char cmd_buf[128];
+    char cmd_buf[256];
 
-    strcpy(cmd_buf, "date +\"%Y-%m-%d %H:%M:%S\" >> /root/scanner/iperf/gps_info.txt ");
+    if(strlen(file_name_tail) == 0)
+        scan_logic_gps_info_file_name_tail();
+
+    strcpy(cmd_buf, "date +\"%Y-%m-%d %H:%M:%S\" ");
+    snprintf(cmd_buf+strlen(cmd_buf), 256-strlen(cmd_buf), " >> /root/scanner/iperf/gps_info-%s", file_name_tail);
     system(cmd_buf);
+    printf("cmd_buf=%s\n",cmd_buf);
 
-    memset(cmd_buf, 0, 128);
-    snprintf(cmd_buf, 128, "echo '%f,%f' >> /root/scanner/iperf/gps_info.txt", (float)lat /1000000, (float)lon /1000000);
+    memset(cmd_buf, 0, 256);
+    snprintf(cmd_buf, 256, "echo '%f,%f' >> /root/scanner/iperf/gps_info-%s", (float)lat /10000000, (float)lon /10000000, file_name_tail);
+    printf("cmd_buf=%s\n",cmd_buf);
     system(cmd_buf);
 }
 ///////////////////////////////////////////

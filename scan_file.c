@@ -24,7 +24,7 @@ static FILE *log_info_file_fp = NULL;
 
 static int modem_info_num = 0;
 //////////////////////////////////////////////////////////////////
-static void scan_local_time_get(char *time_buf)
+void scan_local_time_get(char *time_buf)
 {
     struct tm *timenow;
     time_t now;

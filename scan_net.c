@@ -113,8 +113,8 @@ static void *scan_net_run_pthread()
 /////////////////////////////////////////////////////////////////////////
 int scan_net_gps_info_get(float *lat, float *lon)
 {
-    *lat = (float)net_gps_lat /1000000;
-    *lon = (float)net_gps_lon /1000000;
+    *lat = (float)net_gps_lat /10000000;
+    *lon = (float)net_gps_lon /10000000;
 }
 /////////////////////////////////////////////////////////////////////////////
 void scan_net_run()

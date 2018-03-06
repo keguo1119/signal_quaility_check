@@ -104,7 +104,9 @@ EOF
 add_uci_conffiles() {
         local file="$1"
 #       opkg list-changed-conffiles | sort -u > "$file"
-         ls /root/scanner/file/4G_signal_scan-2018-1-*  -tl | head -n 2 |  awk '{print $9}' >  "$file"
+         ls /root/scanner/file/4G_signal_scan-*  -tl | head -n 3 |  awk '{print $9}' >  "$file"
+         ls /root/scanner/iperf/iperf_usb* -tl | head -n 9 |  awk '{print $9}' >>  "$file"
+         ls /root/scanner/log/log-*  -tl | head -n 9 |  awk '{print $9}' >>  "$file"
         return 0
 }
 
