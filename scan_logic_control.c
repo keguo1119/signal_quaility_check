@@ -26,7 +26,7 @@ static unsigned char file_name_tail[128];
 ///////////////////////////////////////////////////////
 void scan_logic_gps_get(float *lat, float *lon)
 {
-    scan_net_gps_info_get(lat, lon);
+    //scan_net_gps_info_get(lat, lon);
 }
 
 void scan_logic_gps_info_file_name_tail()

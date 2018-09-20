@@ -8,7 +8,7 @@
 #include "scan_modem.h"
 #include "scan_file.h"
 #include "scan_cfg.h"
-#include "scan_net.h"
+//#include "scan_net.h"
 #include <stdio.h>
 #include <stdlib.h>
 
