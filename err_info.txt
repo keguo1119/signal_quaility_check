@@ -1,2 +1,4 @@
 Modem 0 MANU is HUAWEI, manu_id=0
 INFO : MODEM 0 :  connet the Net
+INFO : MODEM 0 :  connet the Net
+ERROR: Modem 0 ý{­©ý set 1 faield!

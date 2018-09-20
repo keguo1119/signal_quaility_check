@@ -895,12 +895,12 @@ void scan_modem_init()
     printf(" %s is ok!\n", __func__);
     scan_modem_status_check(pm);
     mode = scan_cfg_modem_oper_mode_get();
+	printf(" 2------\n");
    
     scan_logic_oper_mode_set(mode);
+	printf(" 3------\n");
     
     ret = scan_modem_mode_change(mode); 
-
-
- 
+	printf(" 4------\n");
 }
 ////////////////////////////////////

@@ -12,8 +12,8 @@
 
 static char *scan_sys_cfg_path = "./";
 static char *scan_sys_cfg_file = "sys_cfg";
-static char *scan_usr_cfg_path = "/etc/config";
-static char *scan_usr_cfg_file = "scan";
+static char *scan_usr_cfg_path = "./";
+static char *scan_usr_cfg_file = "usr_cfg";
 
 extern const char *sys_cfg_path;
 extern const char *sys_cfg_file;

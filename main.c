@@ -22,18 +22,18 @@ void scanner_init()
 //    scan_net_init();
 }
 
-//void scanner_run()
-//{
-//    scan_modem_run();
+void scanner_run()
+{
+    scan_modem_run();
 //    scan_net_run();
 //    scan_logic_control_run();
-//}
+}
 
 int main(int argc, char ** argv)
 {
     scanner_init();
 
-//    scanner_run();
+    scanner_run();
 
     while(1);
     printf("run OK!\n");
